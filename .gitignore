@@ -1,0 +1,81 @@
+# ── Environment & Secrets ──────────────────────────────────
+.env
+.env*
+!.env.example
+
+# ── Python / Backend ───────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments (Matches backend/.venv and any virtual env)
+venv/
+.venv/
+env/
+ENV/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+coverage/
+htmlcov/
+*.log
+
+# ── Node.js / Frontend ─────────────────────────────────────
+node_modules/
+.next/
+out/
+.npm
+.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+*.tsbuildinfo
+next-env.d.ts
+.vercel/
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ── IDEs & Operating Systems ────────────────────────────────
+.DS_Store
+Thumbs.db
+*.pem
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# ── Local Storage & Upload Artifacts ───────────────────────
+temp/
+scratch/
+data/storage/
+backend/data/storage/
