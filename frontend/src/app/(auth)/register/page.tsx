@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/utils";
 
 export default function RegisterPage() {
   const { register } = useAuth();
@@ -33,12 +34,7 @@ export default function RegisterPage() {
     try {
       await register(email, password, fullName || undefined);
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Registration failed. Please check your details.");
-      } else {
-        setError("Unable to connect to the server. Please try again.");
-      }
+      setError(getErrorMessage(err, "Registration failed. Please check your details."));
     } finally {
       setIsLoading(false);
     }

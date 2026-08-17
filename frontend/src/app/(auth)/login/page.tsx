@@ -4,6 +4,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth";
+import { getErrorMessage } from "@/lib/utils";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -20,12 +21,7 @@ export default function LoginPage() {
     try {
       await login(email, password);
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Unable to sign in. Please verify your email and password.");
-      } else {
-        setError("Unable to connect to the server. Please try again.");
-      }
+      setError(getErrorMessage(err, "Unable to sign in. Please verify your email and password."));
     } finally {
       setIsLoading(false);
     }

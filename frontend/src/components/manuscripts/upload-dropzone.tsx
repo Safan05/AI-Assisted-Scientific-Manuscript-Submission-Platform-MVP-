@@ -5,6 +5,7 @@
 
 import React, { useState, useRef } from "react";
 import { projectApi, manuscriptApi } from "@/lib/api";
+import { getErrorMessage } from "@/lib/utils";
 import StatusBadge from "./status-badge";
 import type { Manuscript } from "@/lib/types";
 
@@ -82,12 +83,7 @@ export function UploadDropzone({
     } catch (err: unknown) {
       setIsUploading(false);
       setIsParsing(false);
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Upload failed. Please try again.");
-      } else {
-        setError("Network error during manuscript upload.");
-      }
+      setError(getErrorMessage(err, "Upload failed. Please try again."));
     }
   };
 
@@ -100,12 +96,7 @@ export function UploadDropzone({
       setUploadedManuscript(updatedRes.data);
       onManuscriptUploaded(updatedRes.data);
     } catch (err: unknown) {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Document extraction failed.");
-      } else {
-        setError("Extraction failed. Please try again.");
-      }
+      setError(getErrorMessage(err, "Document extraction failed. Please try again."));
     } finally {
       setIsParsing(false);
     }

@@ -8,6 +8,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { manuscriptApi, projectApi } from "@/lib/api";
+import { getErrorMessage } from "@/lib/utils";
 import StatusBadge from "@/components/manuscripts/status-badge";
 import JournalSelector from "@/components/journals/journal-selector";
 import type { Manuscript, Project } from "@/lib/types";
@@ -46,12 +47,7 @@ export default function JournalSelectionPage({
       qc.invalidateQueries({ queryKey: ["project-manuscripts", projectId] });
     },
     onError: (err: unknown) => {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(axErr.response?.data?.detail || "Failed to select target journal");
-      } else {
-        setErrorMessage("Network error selecting target journal");
-      }
+      setErrorMessage(getErrorMessage(err, "Failed to select target journal"));
     },
   });
 

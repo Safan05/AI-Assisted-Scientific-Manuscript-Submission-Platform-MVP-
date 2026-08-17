@@ -5,6 +5,7 @@ import React, { use, useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { manuscriptApi, projectApi } from "@/lib/api";
+import { getErrorMessage } from "@/lib/utils";
 import StatusBadge from "@/components/manuscripts/status-badge";
 import MetadataForm from "@/components/manuscripts/metadata-form";
 import type { Manuscript, ManuscriptIR, ManuscriptAsset, Project } from "@/lib/types";
@@ -59,12 +60,7 @@ export default function ManuscriptEditorPage({
       qc.invalidateQueries({ queryKey: ["project-manuscripts", projectId] });
     },
     onError: (err: unknown) => {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(axErr.response?.data?.detail || "Document extraction failed");
-      } else {
-        setErrorMessage("Extraction failed");
-      }
+      setErrorMessage(getErrorMessage(err, "Document extraction failed"));
     },
   });
 
@@ -81,12 +77,7 @@ export default function ManuscriptEditorPage({
       qc.invalidateQueries({ queryKey: ["project-manuscripts", projectId] });
     },
     onError: (err: unknown) => {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(axErr.response?.data?.detail || "Failed to save metadata");
-      } else {
-        setErrorMessage("Failed to save changes");
-      }
+      setErrorMessage(getErrorMessage(err, "Failed to save metadata"));
     },
   });
 

@@ -5,6 +5,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { projectApi } from "@/lib/api";
+import { getErrorMessage } from "@/lib/utils";
 import type { Project, ProjectCreate } from "@/lib/types";
 
 export default function ProjectsPage() {
@@ -31,12 +32,7 @@ export default function ProjectsPage() {
       setError(null);
     },
     onError: (err: unknown) => {
-      if (err && typeof err === "object" && "response" in err) {
-        const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Failed to create project");
-      } else {
-        setError("Network error creating project");
-      }
+      setError(getErrorMessage(err, "Failed to create project"));
     },
   });
 
