@@ -74,7 +74,7 @@ export function ChecklistItemCard({
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-1">
               <span className="font-mono text-xs uppercase tracking-wider text-muted-foreground">
-                {item.rule_type.replace("_", " ")}
+                {item.rule_type ? item.rule_type.replace("_", " ") : item.rule_key || "Check"}
               </span>
               <span className="text-muted-foreground/30">•</span>
               <span

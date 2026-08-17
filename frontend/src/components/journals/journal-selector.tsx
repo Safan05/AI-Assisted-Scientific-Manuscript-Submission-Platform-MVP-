@@ -167,7 +167,7 @@ export function JournalSelector({
                       Abstract Limit
                     </div>
                     <div className="text-xl font-bold text-[#141413] mt-1">
-                      {templateDetail.max_abstract_words !== null
+                      {templateDetail.max_abstract_words != null
                         ? `${templateDetail.max_abstract_words.toLocaleString()} words`
                         : "No limit"}
                     </div>
@@ -179,7 +179,7 @@ export function JournalSelector({
                       Main Text Limit
                     </div>
                     <div className="text-xl font-bold text-[#141413] mt-1">
-                      {templateDetail.max_total_words !== null
+                      {templateDetail.max_total_words != null
                         ? `${templateDetail.max_total_words.toLocaleString()} words`
                         : "No word limit"}
                     </div>

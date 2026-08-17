@@ -12,6 +12,15 @@ Two-pass extraction strategy:
 
 Operates entirely on the DoclingParseResult.sections tree and
 DoclingParseResult.full_markdown — no raw .docx bytes required.
+
+FIX (v2): Corrected _parse_authors to NOT pick the title line as an author.
+The old heuristic took author_lines[0] which was often the manuscript title
+(e.g. "Unified Penetration Testing Framework" → parsed as author).
+The new logic applies multiple guards:
+  - Min word count for a title (≥ 5 unique title words → skip that line)
+  - Preamble line ordering: title first, then author names
+  - Looks for lines with common author-name patterns (short, 2-4 token names)
+  - Prioritises lines that follow the title in the preamble
 """
 
 from __future__ import annotations
@@ -45,6 +54,22 @@ _AUTHOR_CONTRIB_HEADINGS = {"author contributions", "authors' contributions", "c
 _ACKNOWLEDGE_HEADINGS = {"acknowledgements", "acknowledgments", "acknowledgement"}
 _FUNDING_HEADINGS = {"funding", "funding sources", "financial support", "grant support"}
 
+# Words that strongly suggest a line is a title, not an author name
+_TITLE_INDICATOR_WORDS = {
+    "of", "in", "on", "for", "with", "using", "based",
+    "towards", "toward", "via", "through", "deep", "learning", "neural",
+    "network", "framework", "approach", "method", "system", "model",
+    "analysis", "detection", "segmentation", "classification", "recognition",
+    "study", "review", "survey", "evaluation", "assessment", "performance",
+}
+
+# Words that appear in affiliation lines (not author names)
+_AFFIL_KEYWORDS = {
+    "university", "institute", "department", "dept", "hospital", "school",
+    "faculty", "college", "laboratory", "lab", "center", "centre",
+    "research", "foundation", "clinic", "medical", "health",
+}
+
 # ── LLM extraction schema (compact for structured_extract) ─────────────────────
 
 from pydantic import BaseModel
@@ -63,11 +88,6 @@ class MetadataExtractor:
     """
     Extracts ManuscriptIR fields from the structured section tree
     produced by DoclingParser, with an optional LLM fallback pass.
-
-    Args:
-        llm: Optional LLM service. When provided, fires a structured
-             extraction call for any fields heuristics could not fill.
-             When None, only the heuristic pass runs.
     """
 
     def __init__(self, llm: Optional[LLMService] = None):
@@ -84,19 +104,10 @@ class MetadataExtractor:
     ) -> ManuscriptIR:
         """
         Run heuristic + optional LLM extraction on the parsed section tree.
-
-        Args:
-            sections: SectionNode list from DoclingParser.parse().sections.
-            full_markdown: Full document markdown export from Docling (used as
-                           LLM context when heuristics are insufficient).
-
-        Returns:
-            A populated ManuscriptIR instance.
         """
-        # Flatten sections for quick lookup
         flat = self._flatten(sections)
 
-        # ── Heuristic pass ────────────────────────────────────────────────────
+        # ── Heuristic pass ──────────────────────────────────────────────────
         title = self._extract_title(sections, flat)
         abstract = self._extract_abstract(flat)
         keywords = self._extract_keywords(flat)
@@ -108,16 +119,18 @@ class MetadataExtractor:
         acknowledgements = self._extract_section_text(flat, _ACKNOWLEDGE_HEADINGS)
         funding = self._extract_funding(flat)
 
-        # Authors heuristic (preamble block — level-0 section)
-        authors_raw = self._extract_raw_authors_block(sections)
+        # Authors heuristic — pass the extracted title so it can be skipped
+        authors_raw = self._extract_raw_authors_block(sections, exclude_title=title)
 
-        # ── LLM fallback pass ─────────────────────────────────────────────────
+        # ── LLM fallback pass ───────────────────────────────────────────────
         llm_result: Optional[LLMAuthorBlock] = None
         needs_llm = not title or not abstract or not keywords
 
         if needs_llm and self.llm:
             try:
-                llm_result = await self._llm_extract_header(full_markdown or self._sections_to_text(sections))
+                llm_result = await self._llm_extract_header(
+                    full_markdown or self._sections_to_text(sections)
+                )
             except Exception as e:
                 logger.warning("LLM metadata extraction failed: %s", e)
 
@@ -129,12 +142,10 @@ class MetadataExtractor:
             if not keywords and llm_result.keywords:
                 keywords = llm_result.keywords
 
-        # ── Build authors list ────────────────────────────────────────────────
-        # We parse a best-effort author list from the preamble or LLM output.
-        # Full structured author/affiliation extraction is expected to be
-        # completed by the user in the Metadata Editor UI.
+        # ── Build authors list ───────────────────────────────────────────────
         authors = self._parse_authors(
-            llm_result.authors_raw if llm_result else authors_raw
+            llm_result.authors_raw if llm_result else authors_raw,
+            exclude_title=title,
         )
         corresponding_author: Optional[CorrespondingAuthor] = None
         if llm_result and llm_result.corresponding_author_name:
@@ -142,12 +153,14 @@ class MetadataExtractor:
                 full_name=llm_result.corresponding_author_name,
                 email=llm_result.corresponding_author_email or "",
             )
+        else:
+            corresponding_author = self._extract_corresponding_from_preamble(sections)
 
-        # ── Word count (rough) ────────────────────────────────────────────────
+        # ── Word count ───────────────────────────────────────────────────────
         body_text = self._sections_to_text(sections)
         word_count = len(body_text.split()) if body_text else 0
 
-        # ── Assemble body sections (exclude meta-sections) ────────────────────
+        # ── Assemble body sections (exclude meta-sections) ───────────────────
         meta_headings = (
             _ABSTRACT_HEADINGS
             | _KEYWORDS_HEADINGS
@@ -167,7 +180,7 @@ class MetadataExtractor:
         return ManuscriptIR(
             title=title or "Untitled",
             authors=authors,
-            affiliations=[],  # Expanded in Metadata Editor (Module 5)
+            affiliations=[],
             corresponding_author=corresponding_author,
             abstract=abstract or "",
             keywords=keywords or [],
@@ -210,10 +223,11 @@ class MetadataExtractor:
         """
         Title heuristic:
         1. First Heading 1 node.
-        2. First content line of the __preamble__ that is ≥ 10 chars and not
-           an email / ORCID line.
+        2. First content line of __preamble__ that is >= 10 chars, not an
+           email / ORCID / URL / author-name line (short < 5 words), and
+           not an affiliation line.
         """
-        # 1. First H1
+        # 1. First H1 in the document
         for s in flat:
             if s.level == 1 and s.heading and s.heading != "__preamble__":
                 return s.heading.strip()
@@ -223,9 +237,128 @@ class MetadataExtractor:
         if preamble and preamble.content:
             for line in preamble.content:
                 line = line.strip()
-                if len(line) >= 10 and "@" not in line and "http" not in line:
+                if (
+                    len(line) >= 10
+                    and "@" not in line
+                    and "http" not in line
+                    and "orcid" not in line.lower()
+                    and not re.match(r"^\d", line)  # starts with number → affil
+                    and not any(kw in line.lower() for kw in _AFFIL_KEYWORDS)
+                ):
                     return line
 
+        return None
+
+    def _is_likely_title(self, text: str) -> bool:
+        """
+        Return True if this text looks more like a manuscript title than a name.
+        Criteria:
+        - 5 or more words
+        - Contains typical title vocabulary (articles, prepositions, technical words)
+        - NOT a short personal name pattern
+        """
+        if text.count(",") >= 2:
+            return False
+            
+        words = text.split()
+        if len(words) >= 5:
+            lower_words = {w.lower().strip(".,;:") for w in words}
+            indicator_count = len(lower_words & _TITLE_INDICATOR_WORDS)
+            if indicator_count >= 1:
+                return True
+            # Long enough to be a title even without indicator words,
+            # but if it has multiple commas, it's likely an author list, not a title.
+            if len(words) >= 6:
+                return True
+        return False
+
+    def _is_likely_author_line(self, line: str) -> bool:
+        """
+        Return True if this line looks like an author name list.
+        Criteria:
+        - NOT affiliation keywords / email / URL
+        - NOT a title (fails _is_likely_title)
+        - Contains ≥ 1 comma-separated short name that matches human name pattern
+          (1-4 tokens, first token uppercase, allows initials like 'A.')
+        """
+        if "@" in line or "http" in line or "orcid" in line.lower():
+            return False
+        if any(kw in line.lower() for kw in _AFFIL_KEYWORDS):
+            return False
+        if re.match(r"^\d", line):
+            return False
+
+        # Strip superscript markers at end of the whole line
+        cleaned = re.sub(r"[\d,*†‡§¶]+$", "", line).strip()
+        cleaned = re.sub(r"\s+", " ", cleaned)
+
+        # If it looks like a title, it's not an author line
+        if self._is_likely_title(cleaned):
+            return False
+
+        # Check for comma/semicolon separated name list
+        parts = re.split(r"[,;]", cleaned)
+        short_name_count = 0
+        for part in parts:
+            # Strip inline superscripts attached to names: "Smith1" → "Smith"
+            part = re.sub(r"[\d*†‡§¶]+", "", part).strip()
+            if not part:
+                continue
+            tokens = part.split()
+            if not tokens or len(tokens) > 5:
+                continue
+            # Each token is either: starts uppercase, OR is an initial (e.g. "A.")
+            def _is_name_token(t: str) -> bool:
+                t = t.rstrip(".")
+                return bool(t) and (t[0].isupper() or (len(t) == 1 and t.isalpha()))
+
+            if all(_is_name_token(t) for t in tokens):
+                short_name_count += 1
+
+        return short_name_count >= 1
+
+    def _extract_raw_authors_block(
+        self, sections: list[SectionNode], exclude_title: Optional[str] = None
+    ) -> Optional[str]:
+        """
+        Extract author candidate lines from the preamble.
+        Skips: the title line, affiliation lines, email lines, URL lines.
+        Returns only lines that look like author names.
+        """
+        preamble = next((s for s in sections if s.heading == "__preamble__"), None)
+        if not preamble or not preamble.content:
+            return None
+
+        title_lower = (exclude_title or "").strip().lower()
+
+        candidate_lines: list[str] = []
+        for line in preamble.content:
+            line = line.strip()
+            if not line:
+                continue
+            # Skip the title line itself
+            if title_lower and line.lower() == title_lower:
+                continue
+            if self._is_likely_author_line(line):
+                candidate_lines.append(line)
+
+        return "\n".join(candidate_lines) if candidate_lines else None
+
+    def _extract_corresponding_from_preamble(
+        self, sections: list[SectionNode]
+    ) -> Optional[CorrespondingAuthor]:
+        """Try to find a corresponding author email in the preamble block."""
+        preamble = next((s for s in sections if s.heading == "__preamble__"), None)
+        if not preamble:
+            return None
+        for line in preamble.content:
+            if "@" in line:
+                email_match = re.search(r"[\w.\-+]+@[\w.\-]+\.\w{2,}", line)
+                if email_match:
+                    return CorrespondingAuthor(
+                        full_name="",
+                        email=email_match.group(0),
+                    )
         return None
 
     def _extract_abstract(self, flat: list[SectionNode]) -> Optional[str]:
@@ -242,7 +375,6 @@ class MetadataExtractor:
             return None
 
         raw = " ".join(section.content)
-        # Split on semicolons, commas, bullets, or pipes
         parts = re.split(r"[;,|•·\n]+", raw)
         keywords = [p.strip(" .·•") for p in parts if p.strip(" .·•")]
         return keywords if keywords else None
@@ -256,13 +388,6 @@ class MetadataExtractor:
             return "\n\n".join(p.strip() for p in section.content if p.strip())
         return None
 
-    def _extract_raw_authors_block(self, sections: list[SectionNode]) -> Optional[str]:
-        """Return the preamble content as a raw string (heuristic author context)."""
-        preamble = next((s for s in sections if s.heading == "__preamble__"), None)
-        if preamble and preamble.content:
-            return "\n".join(preamble.content)
-        return None
-
     def _extract_funding(self, flat: list[SectionNode]) -> list[FundingSource]:
         """Parse funding section into FundingSource objects (best-effort)."""
         section = self._find_section(flat, _FUNDING_HEADINGS)
@@ -274,8 +399,9 @@ class MetadataExtractor:
             line = line.strip()
             if not line:
                 continue
-            # Try to extract grant numbers like "Grant No. 123456" or "#123456"
-            grant_match = re.search(r"(?:grant|award|contract|agreement)[\s#:]*([A-Z0-9-]+)", line, re.IGNORECASE)
+            grant_match = re.search(
+                r"(?:grant|award|contract|agreement)[\s#:]*([A-Z0-9-]+)", line, re.IGNORECASE
+            )
             grant_number = grant_match.group(1) if grant_match else None
             sources.append(FundingSource(funder=line[:500], grant_number=grant_number))
 
@@ -298,13 +424,11 @@ class MetadataExtractor:
             if not line:
                 continue
 
-            # Detect numbered reference start
             numbered = re.match(r"^[\[\(]?(\d+)[\]\).]?\s+", line)
             if numbered:
                 idx = int(numbered.group(1))
                 raw_text = line[numbered.end():].strip()
             else:
-                # Un-numbered — append to last ref or start a new one
                 if refs:
                     refs[-1] = Reference(
                         index=refs[-1].index,
@@ -318,58 +442,71 @@ class MetadataExtractor:
                     idx += 1
                     raw_text = line
 
-            # Try to extract DOI
-            doi_match = re.search(r"https?://doi\.org/(\S+)|doi:\s*(\S+)", raw_text, re.IGNORECASE)
-            doi = (doi_match.group(1) or doi_match.group(2)).rstrip(".,)") if doi_match else None
-
-            # Try to extract year
+            doi_match = re.search(
+                r"https?://doi\.org/(\S+)|doi:\s*(\S+)", raw_text, re.IGNORECASE
+            )
+            doi = (
+                (doi_match.group(1) or doi_match.group(2)).rstrip(".,)")
+                if doi_match
+                else None
+            )
             year_match = re.search(r"\b(19|20)\d{2}\b", raw_text)
             year = int(year_match.group(0)) if year_match else None
 
-            refs.append(Reference(
-                index=idx,
-                raw_text=raw_text,
-                year=year,
-                doi=doi,
-            ))
+            refs.append(Reference(index=idx, raw_text=raw_text, year=year, doi=doi))
 
         return refs
 
-    def _parse_authors(self, authors_raw: Optional[str]) -> list[Author]:
+    def _parse_authors(
+        self,
+        authors_raw: Optional[str],
+        exclude_title: Optional[str] = None,
+    ) -> list[Author]:
         """
         Parse a raw author string into Author objects.
-        Best-effort: splits on commas or semicolons, handles "First Last" name format.
+
+        Guards against picking the manuscript title as an author:
+        - Skips any line that matches the title text
+        - Skips any line that _is_likely_title() returns True for
+        - Only processes lines that _is_likely_author_line() approves
         """
         if not authors_raw:
             return []
 
-        authors: list[Author] = []
-        # Filter out lines that look like affiliations (start with number/superscript or contain university/dept keywords)
-        affil_keywords = {"university", "institute", "department", "dept", "hospital", "school", "faculty", "college", "laboratory"}
+        title_lower = (exclude_title or "").strip().lower()
         lines = [l.strip() for l in authors_raw.split("\n") if l.strip()]
-        author_lines = [
-            l for l in lines
-            if not any(kw in l.lower() for kw in affil_keywords)
-            and "@" not in l
-            and not re.match(r"^\d", l)  # Skip lines starting with affiliation index numbers
-        ]
 
-        # Take the first plausible author line and split it
-        if not author_lines:
+        # Find the best author line — first line that passes all guards
+        author_line: Optional[str] = None
+        for line in lines:
+            if title_lower and line.lower() == title_lower:
+                continue
+            if self._is_likely_title(line):
+                continue
+            if not self._is_likely_author_line(line):
+                continue
+            author_line = line
+            break
+
+        if not author_line:
             return []
 
-        first_line = author_lines[0]
-        parts = re.split(r"[,;]", first_line)
+        authors: list[Author] = []
+        # Strip common superscript markers before splitting
+        author_line_clean = re.sub(r"\s*[\d*†‡§¶]+\s*(?=[,;]|$)", "", author_line)
+        parts = re.split(r"[,;]", author_line_clean)
         for part in parts:
-            part = part.strip().strip("*†‡§¶")
+            part = part.strip().strip("*†‡§¶ ")
             if not part:
                 continue
             name_parts = part.split()
             if len(name_parts) >= 2:
-                authors.append(Author(
-                    given_name=" ".join(name_parts[:-1]),
-                    surname=name_parts[-1],
-                ))
+                authors.append(
+                    Author(
+                        given_name=" ".join(name_parts[:-1]),
+                        surname=name_parts[-1],
+                    )
+                )
             elif len(name_parts) == 1:
                 authors.append(Author(given_name="", surname=name_parts[0]))
 

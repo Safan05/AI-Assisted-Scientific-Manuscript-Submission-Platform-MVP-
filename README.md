@@ -11,11 +11,11 @@ An end-to-end full-stack web platform designed to automate scientific manuscript
 | **Module 1: Scaffolding & Database** | ✅ Completed | FastAPI, SQLModel, Asyncpg, Alembic, Next.js 16 (App Router), Neon PostgreSQL setup |
 | **Module 2: Auth & User Management** | ✅ Completed | JWT Auth (OAuth2 Form & JSON), bcrypt hashing, `GET /users/me`, router guards |
 | **Module 3: Project CRUD & Storage** | ✅ Completed | Project lifecycle, secure `.docx` upload, `StorageService` abstraction (Bunny.net/S3/Local) |
-| **Module 4: Manuscript Parsing Engine** | ✅ Completed | `Docling` parsing backend with `python-docx` fallback, `ImageExtractor`, `MetadataExtractor` |
+| **Module 4: Manuscript Parsing Engine** | ✅ Completed | `Docling` parsing backend with `python-docx` fallback, `ImageExtractor`, `MetadataExtractor` with heuristic & LLM title/author discrimination |
 | **Module 5: Frontend UI & Metadata Editor** | ✅ Completed | Anthropic warm palette, Collapsible Sidebar, Recursive Section Tree & Citation Editor |
-| **Module 6: Journal Templates & Selection** | ✅ Completed | CRUD for `journal_templates` & `template_rules`, seeded Nature & PLOS ONE standards with primary sources |
+| **Module 6: Journal Templates & Selection** | ✅ Completed | CRUD for `journal_templates` & `template_rules`, seeded 6 major venue standards (Nature, PLOS ONE, IEEE, MIA, Radiology, MIDL) |
 | **Module 7: Pre-flight Checklist Engine** | ✅ Completed | Rule-based compliance evaluation engine (`word_count`, `required_field`, `regex`, `presence`), server-side `/confirm` gate, and interactive checklist UI |
-| **Module 8: Document Generator** | ⏳ Next | Journal-compliant target `.docx` builder using `python-docx` (`NatureFormatter`, `PlosFormatter`) |
+| **Module 8: Document Generator & Export** | ✅ Completed | Journal-compliant target `.docx` builder with concrete formatters (`Nature`, `PLOS ONE`, `IEEE`, `MIA`, `Radiology`, `MIDL`), download & regeneration UI |
 
 ---
 
@@ -34,9 +34,10 @@ An end-to-end full-stack web platform designed to automate scientific manuscript
 - **Framework**: FastAPI (Python 3.10+)
 - **ORM & Models**: SQLModel / SQLAlchemy (Async Engine via `asyncpg`)
 - **Migrations**: Alembic (Configured for async PostgreSQL and SQLModel metadata)
-- **Authentication**: JWT Tokens (OAuth2 Password Bearer flow) with `passlib` (bcrypt)
+- **Authentication**: JWT Tokens (OAuth2 Password Bearer flow) with native `bcrypt`
 - **Database**: PostgreSQL (Connected to cloud Neon Postgres instance)
 - **Document Parsing**: [Docling](https://github.com/docling-project/docling) (LF AI & Data Foundation) with resilient `python-docx` fallback parser.
+- **Document Generation**: `python-docx` with extensible `BaseFormatter` and concrete journal formatters.
 
 ### Core Abstractions
 1. **`StorageService`** (`app/services/storage/`): Abstract interface wrapping both S3-compatible cloud storage and a **`LocalStorage` driver** (`STORAGE_PROVIDER=local`) storing files in `data/storage/`.
@@ -45,41 +46,55 @@ An end-to-end full-stack web platform designed to automate scientific manuscript
 4. **`DoclingParser`** (`app/services/parsing/docling_parser.py`): Parser producing structured `SectionNode` trees, extracting embedded figures with captions, and parsing tables.
 5. **`JournalTemplate` & `TemplateRule`** (`app/models/journal_template.py`): Schema-driven target journal specifications with validation rule configs.
 6. **`PreflightChecker`** (`app/services/preflight/checker.py`): Evaluates compliance against journal rules, produces diagnostic items, and aggregates pass/warn/fail status.
+7. **`DocumentGenerator`** (`app/services/docgen/generator.py`): Orchestrates `.docx` generation, applying journal styling, title layout, section recursion, citations, declarations, and storage uploads.
 
 ---
 
-## 🏛️ Seeded Journal Standards (Primary Sources)
+## 🏛️ Seeded Journal Standards & Concrete Formatters
 
-Authoritative submission guidelines from **Nature** and **PLOS ONE** are encoded directly into the database:
+Authoritative submission guidelines and matching output formatters are encoded for 6 top-tier venues:
 
-### 1. **Nature** (`slug: nature`) - Restrictive, Structured
-*Primary Source: [nature.com/nature/for-authors/initial-submission](https://www.nature.com/nature/for-authors/initial-submission)*
+### 1. **Nature** (`slug: nature`)
 - **Abstract Limit**: 200 words (fully referenced summary paragraph; hard `FAIL` if exceeded).
 - **Main Text Budget**: 2,500 words for standard 6-page article (`WARN` if exceeded).
-- **Mandatory Disclosures**: Competing Interests Statement (`FAIL` if absent).
-- **Reference Guideline**: Max ~50 references (`WARN` if exceeded).
-- **Formatting**: LaTeX/MathType numbered equations only (never images), line numbers required on all pages.
+- **Mandatory Disclosures**: Competing Interests, Data Availability, Author Contributions.
+- **Formatting**: Times New Roman 12pt, double-spaced, superscript citations.
 
-### 2. **PLOS ONE** (`slug: plos-one`) - Open, Reproducibility-Focused
-*Primary Source: [journals.plos.org/plosone/s/submission-guidelines](https://journals.plos.org/plosone/s/submission-guidelines) & [Data Availability Policy](https://journals.plos.org/plosone/s/data-availability)*
+### 2. **PLOS ONE** (`slug: plos-one`)
 - **Abstract Limit**: 300 words (unstructured single-paragraph; hard `FAIL` if exceeded).
-- **Main Text Budget**: `null` (No word limit on main text).
-- **Mandatory Disclosures**: Data Availability Statement with repository links or accession numbers (`FAIL` if absent).
-- **Formatting Rules**: Abstract must contain **no citations** (`WARN` regex check). Bracketed citation numbers `[1]`, not superscripts.
+- **Mandatory Disclosures**: Data Availability Statement with repository links/accession numbers.
+- **Formatting**: No citations in abstract, bracketed numeric citations `[1]`.
+
+### 3. **IEEE Transactions** (`slug: ieee`)
+- **Keywords / Index Terms**: 3–5 taxonomy keywords mandatory.
+- **Formatting**: 10pt Times New Roman, Roman numeral major headings (`I. INTRODUCTION`), bracketed hanging-indent references, single-spaced content.
+
+### 4. **Medical Image Analysis** (`slug: medical-image-analysis`)
+- **Highlights**: Mandatory 3–5 bullet points of novel findings.
+- **Mandatory Disclosures**: CRediT Author Statement, Conflict of Interest.
+- **Formatting**: Elsevier standard layout, 11pt Times New Roman.
+
+### 5. **Radiology (RSNA)** (`slug: radiology`)
+- **Abstract**: Structured (Background, Methods, Results, Conclusion) $\le 300$ words.
+- **Summary & Key Results**: Summary statement $\le 30$ words + 3 key result bullet points.
+- **Formatting**: Double-spaced, 12pt Times New Roman.
+
+### 6. **MIDL (Medical Imaging with Deep Learning)** (`slug: midl`)
+- **Abstract Limit**: 250 words.
+- **Mandatory Disclosures**: Code & Data Availability statement.
+- **Formatting**: 11pt Times New Roman, centered author/affiliation blocks.
 
 ---
 
-## 🛡️ Module 7 - Pre-flight Evaluation Engine
+## 🛡️ Pre-flight & Export Pipeline
 
-The Pre-flight system validates manuscript metadata against target journal submission constraints:
-
-- **Rule Types Evaluated**:
-  1. `word_count`: Threshold checks on abstract, main text, and full manuscript with 5% warning buffers.
-  2. `required_field`: Presence verification for mandatory statements (`conflict_of_interest`, `data_availability`, `ethics_statement`).
-  3. `regex`: Pattern matching and exclusion heuristics (e.g. prohibited citations in abstracts).
-  4. `presence`: Array count bounds and existence checks (e.g. reference count limits).
-- **Server-Side Hard Gate**: `POST /api/v1/manuscripts/{id}/preflight/confirm` returns **HTTP 400** if unresolved `FAIL` items remain, preventing unverified submissions.
-- **Interactive UI**: Itemized diagnostic cards, expandable actual vs expected values, warning acknowledgment toggles, and "Fix in Editor" deep links.
+1. **Upload & Parse**: Original `.docx` parsed into `ManuscriptIR` (`DRAFT` → `PARSED`).
+2. **Metadata Review**: Edit title, authors, affiliations, sections, and statements (`PARSED` → `EDITED`).
+3. **Journal Selection**: Pick target journal from seeded database catalog (`EDITED` → `TARGET_SELECTED`).
+4. **Pre-flight Check**: Rule-based engine checks constraints (`word_count`, `required_field`, `regex`, `presence`).
+5. **Human Confirmation Gate**: Author reviews checklist and signs off (`TARGET_SELECTED` → `CHECKLIST_PASSED`).
+6. **Document Generation**: Format factory compiles submission-ready `.docx` package and stores it (`CHECKLIST_PASSED` → `EXPORTED`).
+7. **Download**: Author downloads final `.docx` package via presigned/local download URL.
 
 ---
 
@@ -90,9 +105,6 @@ swiss2/
 ├── backend/
 │   ├── alembic/
 │   │   └── versions/
-│   │       ├── ae12d0a4069f_create_manuscripts_assets_and_journal_.py
-│   │       ├── c56a78b9d012_create_preflight_results_and_check_items.py ⭐ Preflight tables
-│   │       └── d173c614043f_create_users_and_projects.py
 │   ├── app/
 │   │   ├── api/v1/
 │   │   │   ├── endpoints/
@@ -103,33 +115,29 @@ swiss2/
 │   │   │   │   ├── parsing.py
 │   │   │   │   ├── journals.py     ⭐ CRUD for journal_templates & rules
 │   │   │   │   ├── preflight.py    ⭐ Pre-flight check, override & confirm endpoints
+│   │   │   │   ├── export.py       ⭐ Document generation trigger, status & download
 │   │   │   │   └── storage.py
 │   │   │   └── router.py
 │   │   ├── crud/
-│   │   │   ├── user.py
-│   │   │   ├── project.py
-│   │   │   ├── manuscript.py
-│   │   │   ├── asset.py
-│   │   │   ├── extracted_metadata.py
-│   │   │   ├── journal_template.py
-│   │   │   └── preflight.py        ⭐ PreflightResult & PreflightCheckItem CRUD
 │   │   ├── models/
 │   │   │   ├── user.py
 │   │   │   ├── project.py
 │   │   │   ├── manuscript.py
 │   │   │   ├── asset.py
 │   │   │   ├── journal_template.py
-│   │   │   └── preflight.py        ⭐ SQLModel tables for preflight results
+│   │   │   └── preflight.py
 │   │   ├── schemas/
 │   │   │   ├── manuscript_ir.py
 │   │   │   ├── asset.py
 │   │   │   ├── journal_template.py
-│   │   │   └── preflight.py        ⭐ Pydantic schemas for evaluation items
+│   │   │   └── preflight.py
 │   │   ├── services/
-│   │   │   ├── template_seeder.py  ⭐ Authoritative Nature & PLOS ONE seeder
+│   │   │   ├── template_seeder.py  ⭐ 6 Journal standards seeder
+│   │   │   ├── docgen/             ⭐ Document Generation Engine (Module 8)
+│   │   │   │   ├── formatters/     ⭐ BaseFormatter + Concrete Journal formatters
+│   │   │   │   ├── generator.py    ⭐ DocumentGenerator orchestrator
+│   │   │   │   └── reference_formatter.py
 │   │   │   ├── preflight/
-│   │   │   │   └── checker.py      ⭐ PreflightChecker evaluation engine
-│   │   │   ├── manuscript_service.py
 │   │   │   ├── storage/
 │   │   │   ├── llm/
 │   │   │   └── parsing/
@@ -150,60 +158,64 @@ swiss2/
 │   │   │   │   │           └── [mid]/
 │   │   │   │   │               ├── editor/page.tsx
 │   │   │   │   │               ├── journal/page.tsx   ⭐ Journal Selector UI
-│   │   │   │   │               └── preflight/page.tsx ⭐ Pre-flight Checklist UI
-│   │   │   │   └── layout.tsx                         ⭐ Collapsible Sidebar & Header
+│   │   │   │   │               ├── preflight/page.tsx ⭐ Pre-flight Checklist UI
+│   │   │   │   │               └── export/page.tsx    ⭐ Document Export & Download UI
+│   │   │   │   └── layout.tsx
 │   │   ├── components/
-│   │   │   ├── journals/
-│   │   │   │   └── journal-selector.tsx
-│   │   │   ├── preflight/
-│   │   │   │   ├── checklist-item-card.tsx            ⭐ Status cards & overrides
-│   │   │   │   └── preflight-summary-banner.tsx       ⭐ Diagnostics overview bar
-│   │   │   └── manuscripts/
 │   │   ├── hooks/
 │   │   │   ├── use-auth.tsx
 │   │   │   ├── use-manuscripts.ts
 │   │   │   ├── use-journals.ts
-│   │   │   └── use-preflight.ts                       ⭐ React Query preflight hooks
+│   │   │   ├── use-preflight.ts
+│   │   │   └── use-export.ts                          ⭐ React Query export hooks
 │   │   └── lib/
-│   │       ├── api.ts                                 ⭐ Axios client & preflightApi
-│   │       ├── types.ts                               ⭐ PreflightResult & CheckItem types
-│   │       └── utils.ts                               ⭐ FastAPI error parser & helpers
+│   │       ├── api.ts                                 ⭐ Axios client with exportApi
+│   │       ├── types.ts
+│   │       └── utils.ts
 ```
 
 ---
 
 ## ⚡ API Routes Overview (`/api/v1`)
 
+### Document Export & Generation (Module 8)
+- **`POST /api/v1/manuscripts/{id}/export`**: Triggers journal-compliant `.docx` generation from `CHECKLIST_PASSED` manuscripts.
+- **`GET /api/v1/manuscripts/{id}/export/status`**: Checks export progress and retrieved storage key.
+- **`GET /api/v1/manuscripts/{id}/export/download`**: Obtains presigned/direct download URL for generated `.docx`.
+
 ### Pre-flight Checklist & Health Evaluation
-- **`POST /api/v1/manuscripts/{id}/preflight`**: Evaluates manuscript metadata against target journal rules, saving diagnostic items.
-- **`GET /api/v1/manuscripts/{id}/preflight`**: Retrieves the latest preflight evaluation for a manuscript.
-- **`POST /api/v1/manuscripts/{id}/preflight/override`**: Sets human override rationale on warning items.
-- **`POST /api/v1/manuscripts/{id}/preflight/confirm`**: Verifies zero unresolved `FAIL` items and transitions status:
-  $$\mathbf{TARGET\_SELECTED} \longrightarrow \mathbf{CHECKLIST\_PASSED}$$
+- **`POST /api/v1/manuscripts/{id}/preflight`**: Evaluates manuscript metadata against target journal rules.
+- **`GET /api/v1/manuscripts/{id}/preflight`**: Retrieves latest evaluation results.
+- **`POST /api/v1/manuscripts/{id}/preflight/override`**: Overrides warnings with human rationale.
+- **`POST /api/v1/manuscripts/{id}/preflight/confirm`**: Verifies zero unresolved `FAIL` items (`TARGET_SELECTED` → `CHECKLIST_PASSED`).
 
 ### Journal Templates & Standards
 - **`GET /api/v1/journals`**: Lists active target journal templates.
 - **`GET /api/v1/journals/{id_or_slug}`**: Retrieves detailed template with validation rules.
-- **`POST /api/v1/journals`**: Creates a new journal template.
-- **`PATCH /api/v1/journals/{id}`**: Updates template parameters.
-- **`DELETE /api/v1/journals/{id}`**: Deletes template and associated rules.
-- **`GET /api/v1/journals/{id}/rules`**: Lists validation rules for template.
-- **`POST /api/v1/journals/{id}/rules`**: Adds a validation rule to a template.
-- **`PATCH /api/v1/journals/{id}/rules/{rule_id}`**: Modifies a rule configuration.
-- **`DELETE /api/v1/journals/{id}/rules/{rule_id}`**: Removes a validation rule.
-- **`POST /api/v1/journals/seed`**: Triggers idempotent seeding of Nature & PLOS ONE standards.
+- **`POST /api/v1/journals/seed`**: Seeds 6 target journal standards.
 
 ### Manuscripts & Pipeline
 - **`POST /api/v1/manuscripts/{id}/parse`**: Parses `.docx` (`DRAFT` → `PARSED`).
 - **`PATCH /api/v1/manuscripts/{id}/metadata`**: Commits edited IR (`PARSED` → `EDITED`).
-- **`PATCH /api/v1/manuscripts/{id}`**: Assigns `target_journal_id` (`EDITED` → `TARGET_SELECTED`).
-- **`GET /api/v1/manuscripts/{id}/ir`**: Fetches canonical `ManuscriptIR`.
+- **`PATCH /api/v1/manuscripts/{id}/target-journal`**: Assigns target journal (`EDITED` → `TARGET_SELECTED`).
+- **`GET /api/v1/manuscripts/{id}/metadata`**: Fetches canonical `ManuscriptIR`.
 - **`GET /api/v1/manuscripts/{id}/assets`**: Fetches extracted figures and tables.
 
 ---
 
-## 🚀 Next Milestone: Module 8 — Document Generation Engine
+## 🚀 Running Locally
 
-- Implement `DocumentGenerator` using `python-docx` with modular journal formatters (`NatureFormatter`, `PlosFormatter`).
-- Render journal-specific typography, margins, title block layouts, numbered vs bracketed citations, figure placement, and declarations.
-- Implement `POST /api/v1/manuscripts/{id}/export` endpoint returning generated submission-ready Word `.docx` packages (`CHECKLIST_PASSED` → `EXPORTED`).
+### Backend
+```bash
+cd backend
+.\.venv\Scripts\Activate.ps1
+alembic upgrade head
+uvicorn app.main:app --reload --port 8000
+```
+
+### Frontend
+```bash
+cd frontend
+npm run dev
+```
+Open [http://localhost:3000](http://localhost:3000) to view the application.

@@ -216,21 +216,21 @@ export default function ManuscriptEditorPage({
                   className="border border-[#e6e4dc] bg-[#faf9f5] rounded-xl p-3 space-y-2"
                 >
                   <div className="flex justify-between items-center text-xs text-[#6e6d68]">
-                    <span>Figure #{asset.order_index}</span>
-                    <span>{(asset.file_size_bytes / 1024).toFixed(1)} KB</span>
+                    <span>Figure #{asset.order_index ?? asset.index}</span>
+                    <span>{asset.file_size_bytes ? (asset.file_size_bytes / 1024).toFixed(1) + " KB" : ""}</span>
                   </div>
                   <div className="h-32 bg-white border border-[#e6e4dc] rounded-lg flex items-center justify-center text-xs text-[#6e6d68] overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`http://localhost:8000/api/v1/storage/files/${asset.storage_key}`}
-                      alt={asset.caption || asset.original_name}
+                      alt={asset.caption || asset.original_name || asset.original_filename || ""}
                       className="max-h-full max-w-full object-contain"
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
                     <span className="p-2 text-center text-xs text-[#6e6d68]">
-                      {asset.original_name}
+                      {asset.original_name || asset.original_filename || ""}
                     </span>
                   </div>
                   {asset.caption && (

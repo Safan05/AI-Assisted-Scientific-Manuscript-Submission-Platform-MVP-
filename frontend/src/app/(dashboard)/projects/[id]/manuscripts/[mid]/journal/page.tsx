@@ -149,7 +149,7 @@ export default function JournalSelectionPage({
 
       {/* ── Journal Selector Component ──────────────────────────────── */}
       <JournalSelector
-        currentJournalId={manuscript.target_journal_id}
+        currentJournalId={manuscript.target_journal_id ?? null}
         onSelectJournal={handleSelectJournal}
         isSaving={assignMutation.isPending}
       />

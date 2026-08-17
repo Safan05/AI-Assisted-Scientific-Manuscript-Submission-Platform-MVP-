@@ -1,11 +1,25 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from typing import List
 from uuid import UUID
 from app.core.deps import SessionDep, CurrentUser
 from app.schemas.manuscript import ManuscriptRead, ManuscriptUpdate
 from app.crud import manuscript as manuscript_crud
+from app.crud import project as project_crud
+from app.services import manuscript_service
 
 router = APIRouter()
+
+@router.post("/upload", response_model=ManuscriptRead)
+async def upload_manuscript_direct(
+    session: SessionDep,
+    current_user: CurrentUser,
+    project_id: UUID = Form(...),
+    file: UploadFile = File(...)
+):
+    project = await project_crud.get_project(session, project_id, current_user.id)
+    if not project:
+        raise HTTPException(status_code=404, detail="Project not found")
+    return await manuscript_service.upload_manuscript(session, project_id, current_user.id, file)
 
 @router.get("/{manuscript_id}", response_model=ManuscriptRead)
 async def get_manuscript(

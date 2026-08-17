@@ -132,6 +132,20 @@ async def get_manuscript_extracted_metadata(
     return await get_manuscript_ir(manuscript_id, session, current_user)
 
 
+@router.get(
+    "/{manuscript_id}/metadata",
+    response_model=ManuscriptIR,
+    summary="Get parsed manuscript metadata",
+    description="Returns the current ManuscriptIR built from the ExtractedMetadata row.",
+)
+async def get_manuscript_metadata(
+    manuscript_id: UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    return await get_manuscript_ir(manuscript_id, session, current_user)
+
+
 @router.patch(
     "/{manuscript_id}/metadata",
     response_model=ManuscriptIR,
