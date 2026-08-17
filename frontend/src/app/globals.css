@@ -137,25 +137,25 @@
 @layer utilities {
   .font-mono { font-family: var(--font-mono) !important; }
 
-  /* ── Scientific Dot Matrix & Graph Paper Textures ─────────────── */
+  /* ── Scientific Dot Matrix & Graph Paper Textures (10% Subtlety) ── */
   .bg-grid-dots {
-    background-image: radial-gradient(#dedacf 1.2px, transparent 1.2px);
+    background-image: radial-gradient(rgba(20, 20, 19, 0.08) 1px, transparent 1px);
     background-size: 24px 24px;
   }
 
   .bg-grid-dots-dense {
-    background-image: radial-gradient(#e0dcce 1px, transparent 1px);
+    background-image: radial-gradient(rgba(20, 20, 19, 0.06) 1px, transparent 1px);
     background-size: 14px 14px;
   }
 
   .bg-grid-graph {
     background-image:
-      linear-gradient(to right, #ece9de 1px, transparent 1px),
-      linear-gradient(to bottom, #ece9de 1px, transparent 1px);
+      linear-gradient(to right, rgba(20, 20, 19, 0.04) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(20, 20, 19, 0.04) 1px, transparent 1px);
     background-size: 32px 32px;
   }
 
-  /* ── Corner Precision Crosshairs ─────────────────────────────── */
+  /* ── Corner Precision Crosshairs (Subtle 10% Opacity) ───────── */
   .scientific-box {
     position: relative;
   }
@@ -163,23 +163,25 @@
   .scientific-box::before {
     content: "+";
     position: absolute;
-    top: -6px;
-    left: -6px;
+    top: -5px;
+    left: -5px;
     font-family: var(--font-mono);
     font-size: 10px;
-    color: #a8a59b;
+    color: rgba(20, 20, 19, 0.25);
     pointer-events: none;
+    user-select: none;
   }
 
   .scientific-box::after {
     content: "+";
     position: absolute;
-    bottom: -6px;
-    right: -6px;
+    bottom: -5px;
+    right: -5px;
     font-family: var(--font-mono);
     font-size: 10px;
-    color: #a8a59b;
+    color: rgba(20, 20, 19, 0.25);
     pointer-events: none;
+    user-select: none;
   }
 
   .status-badge {
