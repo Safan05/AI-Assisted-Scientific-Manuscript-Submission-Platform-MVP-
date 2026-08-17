@@ -116,3 +116,55 @@ async def get_manuscript_ir(
         acknowledgements=meta.acknowledgements,
         word_count=manuscript.word_count,
     )
+
+
+@router.get(
+    "/{manuscript_id}/extracted_metadata",
+    response_model=ManuscriptIR,
+    summary="Get parsed manuscript metadata (alias for /ir)",
+    description="Returns the current ManuscriptIR built from the ExtractedMetadata row.",
+)
+async def get_manuscript_extracted_metadata(
+    manuscript_id: UUID,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    return await get_manuscript_ir(manuscript_id, session, current_user)
+
+
+@router.patch(
+    "/{manuscript_id}/metadata",
+    response_model=ManuscriptIR,
+    summary="Save edited manuscript metadata",
+    description=(
+        "Updates ExtractedMetadata in the database with the user's edits, "
+        "recalculates word count, and transitions status from PARSED → EDITED."
+    ),
+)
+async def update_manuscript_metadata(
+    manuscript_id: UUID,
+    ir: ManuscriptIR,
+    session: SessionDep,
+    current_user: CurrentUser,
+):
+    from datetime import datetime
+    from app.crud.extracted_metadata import upsert_extracted_metadata
+
+    manuscript = await manuscript_crud.get_manuscript(session, manuscript_id)
+    if not manuscript:
+        raise HTTPException(status_code=404, detail="Manuscript not found")
+
+    # Upsert extracted metadata
+    await upsert_extracted_metadata(session, manuscript_id, ir)
+
+    # Transition status: if PARSED (or DRAFT), move to EDITED
+    if manuscript.status in ("PARSED", "DRAFT"):
+        manuscript.status = "EDITED"
+    manuscript.word_count = ir.word_count
+    manuscript.updated_at = datetime.utcnow()
+    session.add(manuscript)
+    await session.commit()
+    await session.refresh(manuscript)
+
+    return ir
+
