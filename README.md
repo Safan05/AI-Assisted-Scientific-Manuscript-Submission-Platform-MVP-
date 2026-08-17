@@ -1,4 +1,4 @@
-# AI-Assisted Scientific Manuscript Submission Platform
+# AI-Assisted Scientific Manuscript Submission Platform (MVP)
 
 An end-to-end full-stack web platform designed to automate scientific manuscript parsing, journal-agnostic JSON transformation, metadata extraction, human verification, target journal pre-flight checking, and output document generation (`.docx`).
 
@@ -35,7 +35,7 @@ An end-to-end full-stack web platform designed to automate scientific manuscript
 - **ORM & Models**: SQLModel / SQLAlchemy (Async Engine via `asyncpg`)
 - **Migrations**: Alembic (Configured for async PostgreSQL and SQLModel metadata)
 - **Authentication**: JWT Tokens (OAuth2 Password Bearer flow) with native `bcrypt`
-- **Database**: PostgreSQL (Connected to cloud Neon Postgres instance)
+- **Database**: PostgreSQL (Connected to cloud Neon Postgres instance or local Docker container)
 - **Document Parsing**: [Docling](https://github.com/docling-project/docling) (LF AI & Data Foundation) with resilient `python-docx` fallback parser.
 - **Document Generation**: `python-docx` with extensible `BaseFormatter` and concrete journal formatters.
 
@@ -102,7 +102,9 @@ Authoritative submission guidelines and matching output formatters are encoded f
 
 ```text
 swiss2/
+├── docker-compose.yaml     ⭐ Full-stack Docker orchestration (Postgres, Backend, Frontend)
 ├── backend/
+│   ├── Dockerfile          ⭐ Backend container build recipe
 │   ├── alembic/
 │   │   └── versions/
 │   ├── app/
@@ -120,17 +122,8 @@ swiss2/
 │   │   │   └── router.py
 │   │   ├── crud/
 │   │   ├── models/
-│   │   │   ├── user.py
-│   │   │   ├── project.py
-│   │   │   ├── manuscript.py
-│   │   │   ├── asset.py
-│   │   │   ├── journal_template.py
-│   │   │   └── preflight.py
 │   │   ├── schemas/
-│   │   │   ├── manuscript_ir.py
-│   │   │   ├── asset.py
-│   │   │   ├── journal_template.py
-│   │   │   └── preflight.py
+│   │   │   └── manuscript_ir.py
 │   │   ├── services/
 │   │   │   ├── template_seeder.py  ⭐ 6 Journal standards seeder
 │   │   │   ├── docgen/             ⭐ Document Generation Engine (Module 8)
@@ -143,6 +136,7 @@ swiss2/
 │   │   │   └── parsing/
 │   │   └── main.py
 ├── frontend/
+│   ├── Dockerfile          ⭐ Next.js multi-stage container build recipe
 │   ├── src/
 │   │   ├── app/
 │   │   │   ├── (auth)/
@@ -152,14 +146,11 @@ swiss2/
 │   │   │   │   ├── dashboard/page.tsx
 │   │   │   │   ├── projects/
 │   │   │   │   │   ├── page.tsx
-│   │   │   │   │   └── [id]/
-│   │   │   │   │       ├── page.tsx
-│   │   │   │   │       └── manuscripts/
-│   │   │   │   │           └── [mid]/
-│   │   │   │   │               ├── editor/page.tsx
-│   │   │   │   │               ├── journal/page.tsx   ⭐ Journal Selector UI
-│   │   │   │   │               ├── preflight/page.tsx ⭐ Pre-flight Checklist UI
-│   │   │   │   │               └── export/page.tsx    ⭐ Document Export & Download UI
+│   │   │   │   │   └── [id]/manuscripts/[mid]/
+│   │   │   │   │       ├── editor/page.tsx
+│   │   │   │   │       ├── journal/page.tsx   ⭐ Journal Selector UI
+│   │   │   │   │       ├── preflight/page.tsx ⭐ Pre-flight Checklist UI
+│   │   │   │   │       └── export/page.tsx    ⭐ Document Export & Download UI
 │   │   │   │   └── layout.tsx
 │   │   ├── components/
 │   │   ├── hooks/
@@ -167,9 +158,9 @@ swiss2/
 │   │   │   ├── use-manuscripts.ts
 │   │   │   ├── use-journals.ts
 │   │   │   ├── use-preflight.ts
-│   │   │   └── use-export.ts                          ⭐ React Query export hooks
+│   │   │   └── use-export.ts                  ⭐ React Query export hooks
 │   │   └── lib/
-│   │       ├── api.ts                                 ⭐ Axios client with exportApi
+│   │       ├── api.ts                         ⭐ Axios client with exportApi
 │   │       ├── types.ts
 │   │       └── utils.ts
 ```
@@ -203,19 +194,123 @@ swiss2/
 
 ---
 
-## 🚀 Running Locally
+## 📖 Complete Installation & Setup Guide
 
-### Backend
+### System Prerequisites
+Ensure you have the following installed on your machine:
+- **Python 3.10+** (Tested on Python 3.11)
+- **Node.js 18+** & **npm**
+- **PostgreSQL 14+** (Or use a free [Neon](https://neon.tech) cloud PostgreSQL database, or Docker)
+- **Docker & Docker Compose** *(Optional, if using containerized setup)*
+
+---
+
+### Option A: Local Development Setup (Step-by-Step)
+
+#### 1. Clone the Repository
 ```bash
-cd backend
-.\.venv\Scripts\Activate.ps1
-alembic upgrade head
-uvicorn app.main:app --reload --port 8000
+git clone <repository-url>
+cd swiss2
 ```
 
-### Frontend
-```bash
-cd frontend
-npm run dev
-```
-Open [http://localhost:3000](http://localhost:3000) to view the application.
+#### 2. Backend Setup
+1. Navigate into the backend folder:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a Python virtual environment:
+   - **Windows (PowerShell)**:
+     ```powershell
+     python -m venv .venv
+     .\.venv\Scripts\Activate.ps1
+     ```
+   - **Linux / macOS**:
+     ```bash
+     python3 -m venv .venv
+     source .venv/bin/activate
+     ```
+3. Install backend dependencies:
+   ```bash
+   pip install --upgrade pip
+   pip install -r requirements.txt
+   pip install -e .
+   ```
+4. Create your `.env` configuration file inside `backend/`:
+   ```env
+   # Database (Replace with your local or Neon Postgres connection string)
+   DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/swiss2
+   DATABASE_ECHO=false
+
+   # Authentication
+   JWT_SECRET_KEY=super-secret-jwt-signing-key-for-development
+   JWT_ALGORITHM=HS256
+   JWT_ACCESS_TOKEN_EXPIRE_MINUTES=10080
+   JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+
+   # Local Document Storage
+   STORAGE_PROVIDER=local
+   LOCAL_STORAGE_DIR=data/storage
+
+   # Optional LLM Metadata Extraction Fallback
+   LLM_PROVIDER=openai
+   OPENAI_API_KEY=
+   ```
+5. Apply database migrations:
+   ```bash
+   alembic upgrade head
+   ```
+6. Start the FastAPI development server:
+   ```bash
+   uvicorn app.main:app --reload --port 8000
+   ```
+   *The backend will automatically start on `http://localhost:8000` and seed the 6 journal templates into the database.*
+
+---
+
+#### 3. Frontend Setup
+1. In a new terminal window, navigate to the frontend directory:
+   ```bash
+   cd frontend
+   ```
+2. Install npm packages:
+   ```bash
+   npm install
+   ```
+3. Create your `.env.local` file inside `frontend/`:
+   ```env
+   NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+   ```
+4. Start the Next.js frontend development server:
+   ```bash
+   npm run dev
+   ```
+5. Open [http://localhost:3000](http://localhost:3000) in your web browser.
+
+---
+
+### Option B: Docker Compose Setup (One-Command Deployment)
+
+If you prefer running everything in containers without configuring local Python or Node environments:
+
+1. In the project root directory, run:
+   ```bash
+   docker-compose up --build
+   ```
+2. This automatically:
+   - Spawns a dedicated PostgreSQL 16 container (`port 5432`)
+   - Runs database migrations & starts the FastAPI backend (`http://localhost:8000`)
+   - Builds and boots the Next.js production frontend (`http://localhost:3000`)
+   - Mounts persistent storage volumes for databases and generated `.docx` exports.
+
+---
+
+### 🧪 Verifying the Submission Flow
+
+1. Register an account at `http://localhost:3000/register` or sign in.
+2. Click **"+ New Project"** and create a research project.
+3. Upload any standard `.docx` manuscript.
+4. Click **"Parse Manuscript"** to extract title, authors, affiliations, sections, and statements.
+5. In the **Metadata Editor**, review the extracted fields or add any missing details.
+6. Click **"Select Target Journal"** and choose from **Nature**, **IEEE**, **Medical Image Analysis**, **Radiology**, or **MIDL**.
+7. In the **Pre-flight Checklist**, verify structural compliance and check off human confirmation.
+8. On the **Export** page, click **"Generate Document"** to compile the formatted output and download your submission-ready `.docx` package!
