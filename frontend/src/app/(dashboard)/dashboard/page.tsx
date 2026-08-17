@@ -1,70 +1,57 @@
 "use client";
 
 // src/app/(dashboard)/dashboard/page.tsx
+// User-friendly research overview dashboard with subtle scientific motifs
+
 import React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { projectApi } from "@/lib/api";
 import StatusBadge from "@/components/manuscripts/status-badge";
-import type { Manuscript, Project, ManuscriptStatus } from "@/lib/types";
+import type { Project, Manuscript } from "@/lib/types";
 
 export default function DashboardPage() {
-  // 1. Fetch user projects
   const { data: projects, isLoading: projectsLoading } = useQuery<Project[]>({
     queryKey: ["projects"],
-    queryFn: () => projectApi.list().then((res) => res.data),
+    queryFn: () => projectApi.list().then((r) => r.data),
   });
 
-  // 2. Fetch manuscripts across all user projects
-  const { data: allManuscripts, isLoading: manuscriptsLoading } = useQuery<
-    (Manuscript & { projectName: string })[]
-  >({
-    queryKey: ["all-manuscripts", projects?.map((p) => p.id)],
+  const { data: allManuscripts, isLoading: manuscriptsLoading } = useQuery<Manuscript[]>({
+    queryKey: ["all-manuscripts"],
     queryFn: async () => {
-      if (!projects || projects.length === 0) return [];
+      const projList = await projectApi.list().then((r) => r.data);
       const results = await Promise.all(
-        projects.map(async (project) => {
-          const res = await projectApi.listManuscripts(project.id);
-          return res.data.map((m) => ({
-            ...m,
-            projectName: project.name,
-          }));
-        })
+        projList.map((p) =>
+          projectApi.listManuscripts(p.id).then((r) => r.data).catch(() => [])
+        )
       );
-      return results.flat().sort(
-        (a, b) =>
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-      );
+      return results.flat();
     },
-    enabled: !!projects && projects.length > 0,
   });
 
   const isLoading = projectsLoading || manuscriptsLoading;
 
-  // Calculate status counts
-  const statusCounts: Record<ManuscriptStatus, number> = {
-    DRAFT: 0,
-    PARSED: 0,
-    EDITED: 0,
-    TARGET_SELECTED: 0,
-    CHECKLIST_PASSED: 0,
-    EXPORTED: 0,
-  };
-
-  (allManuscripts || []).forEach((m) => {
-    if (statusCounts[m.status] !== undefined) {
-      statusCounts[m.status] += 1;
-    }
-  });
+  const statusCounts = (allManuscripts || []).reduce(
+    (acc, m) => {
+      acc[m.status] = (acc[m.status] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
 
   const totalManuscripts = (allManuscripts || []).length;
   const totalProjects = (projects || []).length;
 
   return (
-    <div className="max-w-6xl mx-auto space-y-10">
-      {/* ── Page Header ─────────────────────────────────────────────── */}
+    <div className="max-w-6xl mx-auto space-y-8">
+      {/* ── Page Header with Scientific Coordinate Annotations ───────── */}
       <div className="border-b border-[#e6e4dc] pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
+          <div className="flex items-center gap-2 mb-1">
+            <span className="font-mono text-[11px] text-[#8c8b85]">⌖ [ REF · OVERVIEW ]</span>
+            <span className="text-[#e6e4dc]">·</span>
+            <span className="font-mono text-[10px] text-[#8c8b85]">GRID: 24mm · ISO-216</span>
+          </div>
           <h1 className="text-3xl font-bold tracking-tight text-[#141413]">
             Research Overview
           </h1>
@@ -81,51 +68,92 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      {/* ── Stat Highlights ──────────────────────────────────────────── */}
+      {/* ── Abstract Pipeline Flow Indicator ──────────────────────────── */}
+      <div className="bg-white border border-[#e6e4dc] rounded-xl p-4 shadow-sm">
+        <div className="flex justify-between items-center mb-3">
+          <span className="text-xs font-semibold text-[#8c8b85] uppercase tracking-wider">
+            Manuscript Pipeline Architecture
+          </span>
+          <span className="font-mono text-[10px] text-[#8c8b85]">AUTOMATED WORKFLOW</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+          <div className="p-2.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg space-y-1">
+            <div className="font-mono text-[10px] text-[#8c8b85]">01 · INGEST</div>
+            <div className="font-semibold text-[#141413]">Upload .DOCX</div>
+          </div>
+          <div className="p-2.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg space-y-1">
+            <div className="font-mono text-[10px] text-[#8c8b85]">02 · EXTRACT</div>
+            <div className="font-semibold text-[#141413]">Hierarchy & Figs</div>
+          </div>
+          <div className="p-2.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg space-y-1">
+            <div className="font-mono text-[10px] text-[#8c8b85]">03 · EDIT</div>
+            <div className="font-semibold text-[#141413]">Metadata & Citations</div>
+          </div>
+          <div className="p-2.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg space-y-1">
+            <div className="font-mono text-[10px] text-[#8c8b85]">04 · STANDARDS</div>
+            <div className="font-semibold text-[#141413]">Journal Rules</div>
+          </div>
+          <div className="p-2.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg space-y-1">
+            <div className="font-mono text-[10px] text-[#8c8b85]">05 · CHECK & EXPORT</div>
+            <div className="font-semibold text-[#141413]">Pre-flight Check</div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Stat Highlights with Corner Crosshairs ───────────────────── */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+        <div className="scientific-box p-5 bg-white border border-[#e6e4dc] rounded-xl shadow-sm">
           <div className="text-xs font-medium text-[#6e6d68]">
             Active Projects
           </div>
-          <div className="text-2xl font-bold text-[#141413] mt-1">
+          <div className="text-2xl font-bold text-[#141413] mt-1 font-mono">
             {isLoading ? "-" : totalProjects}
           </div>
+          <div className="text-[10px] text-[#8c8b85] mt-2 font-mono">WORKSPACE TOTAL</div>
         </div>
 
-        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+        <div className="scientific-box p-5 bg-white border border-[#e6e4dc] rounded-xl shadow-sm">
           <div className="text-xs font-medium text-[#6e6d68]">
             Total Manuscripts
           </div>
-          <div className="text-2xl font-bold text-[#141413] mt-1">
+          <div className="text-2xl font-bold text-[#141413] mt-1 font-mono">
             {isLoading ? "-" : totalManuscripts}
           </div>
+          <div className="text-[10px] text-[#8c8b85] mt-2 font-mono">INGESTED DOCS</div>
         </div>
 
-        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+        <div className="scientific-box p-5 bg-white border border-[#e6e4dc] rounded-xl shadow-sm">
           <div className="text-xs font-medium text-[#6e6d68]">
             Ready to Edit
           </div>
-          <div className="text-2xl font-bold text-[#141413] mt-1">
-            {isLoading ? "-" : statusCounts.PARSED}
+          <div className="text-2xl font-bold text-[#141413] mt-1 font-mono">
+            {isLoading ? "-" : (statusCounts.PARSED || 0)}
           </div>
+          <div className="text-[10px] text-[#8c8b85] mt-2 font-mono">EXTRACTED & READY</div>
         </div>
 
-        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+        <div className="scientific-box p-5 bg-white border border-[#e6e4dc] rounded-xl shadow-sm">
           <div className="text-xs font-medium text-[#6e6d68]">
             Target Selected
           </div>
-          <div className="text-2xl font-bold text-[#141413] mt-1">
-            {isLoading ? "-" : statusCounts.TARGET_SELECTED}
+          <div className="text-2xl font-bold text-[#141413] mt-1 font-mono">
+            {isLoading ? "-" : (statusCounts.TARGET_SELECTED || 0)}
           </div>
+          <div className="text-[10px] text-[#8c8b85] mt-2 font-mono">READY FOR CHECKS</div>
         </div>
       </div>
 
       {/* ── Active Manuscript Feed ──────────────────────────────────── */}
       <div className="space-y-3">
         <div className="flex justify-between items-center">
-          <h2 className="text-lg font-semibold text-[#141413]">
-            Recent Manuscripts
-          </h2>
+          <div>
+            <h2 className="text-lg font-semibold text-[#141413]">
+              Recent Manuscripts
+            </h2>
+            <p className="text-xs text-[#6e6d68]">
+              All scientific papers across your active research projects.
+            </p>
+          </div>
           <Link
             href="/projects"
             className="text-xs font-medium text-[#6e6d68] hover:text-[#141413] hover:underline"
@@ -139,39 +167,38 @@ export default function DashboardPage() {
             <thead>
               <tr className="border-b border-[#e6e4dc] bg-[#f5f3ec] text-xs font-medium text-[#6e6d68]">
                 <th className="py-3 px-4">Document</th>
-                <th className="py-3 px-4">Project</th>
                 <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Word Count</th>
-                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4">Length</th>
+                <th className="py-3 px-4">Created</th>
                 <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#e6e4dc]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-xs text-[#6e6d68]">
+                  <td colSpan={5} className="py-8 text-center text-xs text-[#6e6d68]">
                     Loading manuscripts...
                   </td>
                 </tr>
               ) : !allManuscripts || allManuscripts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-xs text-[#6e6d68]">
-                    No manuscripts uploaded yet. Create a project to get started.
+                  <td colSpan={5} className="py-12 text-center text-xs text-[#6e6d68]">
+                    No manuscripts uploaded yet. Create a project to start submitting papers.
                   </td>
                 </tr>
               ) : (
-                allManuscripts.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#faf9f5] transition-colors">
-                    <td className="py-3.5 px-4 font-medium text-[#141413]">
-                      {m.original_filename}
-                    </td>
-                    <td className="py-3.5 px-4 text-[#6e6d68]">
-                      <Link
-                        href={`/projects/${m.project_id}`}
-                        className="hover:underline hover:text-[#141413]"
-                      >
-                        {m.projectName}
-                      </Link>
+                allManuscripts.slice(0, 10).map((m) => (
+                  <tr
+                    key={m.id}
+                    className="hover:bg-[#faf9f5] transition-colors"
+                  >
+                    <td className="py-3.5 px-4">
+                      <div className="font-semibold text-[#141413] truncate max-w-sm">
+                        {m.original_filename}
+                      </div>
+                      <div className="font-mono text-[11px] text-[#8c8b85]">
+                        ID: {m.id.slice(0, 8)}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <StatusBadge status={m.status} />

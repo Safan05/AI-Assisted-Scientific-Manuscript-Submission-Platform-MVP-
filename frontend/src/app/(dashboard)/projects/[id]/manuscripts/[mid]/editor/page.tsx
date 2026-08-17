@@ -154,16 +154,20 @@ export default function ManuscriptEditorPage({
       <div className="border-b border-[#e6e4dc] pb-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <span className="text-xs text-[#6e6d68]">
-              {manuscript.original_filename}
+            <span className="font-mono text-[11px] text-[#8c8b85]">
+              ⌖ {manuscript.original_filename}
             </span>
             <StatusBadge status={manuscript.status} />
           </div>
           <h1 className="text-2xl font-bold tracking-tight text-[#141413]">
             {ir?.title || manuscript.original_filename}
           </h1>
-          <div className="flex flex-wrap gap-3 text-xs text-[#6e6d68] mt-1">
-            <span>{manuscript.word_count > 0 ? `${manuscript.word_count.toLocaleString()} words` : ""}</span>
+          <div className="flex flex-wrap items-center gap-3 font-mono text-[11px] text-[#8c8b85] mt-1.5">
+            <span>ID: {manuscript.id.slice(0, 8)}</span>
+            <span>·</span>
+            <span>{manuscript.word_count > 0 ? `${manuscript.word_count.toLocaleString()} WORDS` : "0 WORDS"}</span>
+            <span>·</span>
+            <span>FORMAT: OPENXML DOCX</span>
           </div>
         </div>
       </div>

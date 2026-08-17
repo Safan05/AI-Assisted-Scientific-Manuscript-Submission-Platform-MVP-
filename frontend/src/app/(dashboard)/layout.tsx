@@ -125,20 +125,28 @@ export default function DashboardLayout({
       </aside>
 
       {/* ── Main Content Shell ────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar header */}
-        <header className="h-14 border-b border-[#e6e4dc] bg-[#faf9f5] flex items-center justify-between px-8 shrink-0">
+      <div className="flex-1 flex flex-col min-w-0 bg-[#faf9f5]">
+        {/* Top bar header with scientific coordinate indicators */}
+        <header className="h-14 border-b border-[#e6e4dc] bg-[#faf9f5]/90 backdrop-blur flex items-center justify-between px-8 shrink-0 relative">
           <div className="flex items-center gap-3 text-xs text-[#6e6d68]">
+            <span className="font-mono text-[11px] text-[#8c8b85]">⌖</span>
             <span className="font-medium text-[#141413]">Manuscript Preparation & Submission</span>
+            <span className="text-[#e6e4dc]">|</span>
+            <span className="font-mono text-[10px] text-[#8c8b85]">SYS · RESEARCH LAB</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs text-[#6e6d68]">
-            <span>{user.email}</span>
+          <div className="flex items-center gap-4 text-xs font-mono text-[#6e6d68]">
+            <span className="flex items-center gap-1.5 text-[11px]">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#1b6b37]" />
+              <span>ONLINE</span>
+            </span>
+            <span className="text-[#e6e4dc]">|</span>
+            <span className="text-xs">{user.email}</span>
           </div>
         </header>
 
-        {/* Page Content Viewport */}
-        <main className="flex-1 overflow-auto p-8 lg:p-10">{children}</main>
+        {/* Page Content Viewport with subtle dot grid backdrop */}
+        <main className="flex-1 overflow-auto p-8 lg:p-10 bg-grid-dots relative">{children}</main>
       </div>
     </div>
   );

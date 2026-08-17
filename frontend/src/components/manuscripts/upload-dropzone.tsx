@@ -1,6 +1,8 @@
 "use client";
 
 // src/components/manuscripts/upload-dropzone.tsx
+// Scientific manuscript upload dropzone with precision alignment indicators
+
 import React, { useState, useRef } from "react";
 import { projectApi, manuscriptApi } from "@/lib/api";
 import StatusBadge from "./status-badge";
@@ -113,22 +115,22 @@ export function UploadDropzone({
     <div className="space-y-4">
       {/* Error alert */}
       {error && (
-        <div className="p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+        <div className="p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg font-medium">
           {error}
         </div>
       )}
 
-      {/* Dropzone Container */}
+      {/* Dropzone Container with subtle dot-matrix background */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         onClick={() => fileInputRef.current?.click()}
-        className={`border-2 ${
+        className={`scientific-box border-2 ${
           isDragging
             ? "border-[#141413] bg-[#f5f3ec]"
-            : "border-dashed border-[#e6e4dc] bg-[#faf9f5] hover:border-[#8c8b85]"
-        } p-8 text-center cursor-pointer rounded-xl transition-colors select-none`}
+            : "border-dashed border-[#dcd9ce] bg-white bg-grid-dots-dense hover:border-[#141413]"
+        } p-8 lg:p-10 text-center cursor-pointer rounded-xl transition-all select-none shadow-sm relative overflow-hidden`}
       >
         <input
           ref={fileInputRef}
@@ -138,22 +140,31 @@ export function UploadDropzone({
           className="hidden"
         />
 
-        <div className="max-w-md mx-auto space-y-2">
-          <div className="w-10 h-10 mx-auto rounded-full bg-[#f3f1ea] flex items-center justify-center text-[#141413] mb-2">
+        <div className="max-w-md mx-auto space-y-3 relative z-10">
+          <div className="w-12 h-12 mx-auto rounded-xl bg-[#faf9f5] border border-[#e6e4dc] flex items-center justify-center text-base font-mono shadow-sm">
             📄
           </div>
 
-          <div className="text-sm font-semibold text-[#141413]">
-            {isUploading
-              ? "Uploading document..."
-              : isParsing
-              ? "Extracting sections and figures..."
-              : "Drag and drop your Word document here, or browse"}
+          <div>
+            <div className="text-sm font-semibold text-[#141413]">
+              {isUploading
+                ? "Uploading document..."
+                : isParsing
+                ? "Extracting sections, tables and figures..."
+                : "Drag and drop your Word document here, or browse"}
+            </div>
+            <p className="text-xs text-[#6e6d68] mt-1">
+              Supports Microsoft Word (.docx) documents. Structure, figures, and references are automatically extracted.
+            </p>
           </div>
 
-          <p className="text-xs text-[#6e6d68]">
-            Supported format: Microsoft Word (.docx). Sections, tables, figures, and references will be automatically extracted.
-          </p>
+          <div className="pt-2 flex justify-center items-center gap-3 font-mono text-[10px] text-[#8c8b85]">
+            <span>FORMAT: .DOCX</span>
+            <span>·</span>
+            <span>PARSER: IN-PROCESS</span>
+            <span>·</span>
+            <span>ENCRYPTED INGESTION</span>
+          </div>
         </div>
       </div>
 
@@ -162,13 +173,15 @@ export function UploadDropzone({
         <div className="bg-white border border-[#e6e4dc] rounded-xl p-4 flex justify-between items-center text-sm shadow-sm">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-medium text-[#141413]">
+              <span className="font-semibold text-[#141413]">
                 {uploadedManuscript.original_filename}
               </span>
               <StatusBadge status={uploadedManuscript.status} />
             </div>
-            <div className="text-xs text-[#6e6d68]">
-              {uploadedManuscript.word_count > 0 ? `${uploadedManuscript.word_count.toLocaleString()} words extracted` : "Ready for extraction"}
+            <div className="text-xs text-[#6e6d68] font-mono">
+              {uploadedManuscript.word_count > 0
+                ? `${uploadedManuscript.word_count.toLocaleString()} words extracted`
+                : "Ready for extraction"}
             </div>
           </div>
 
@@ -179,7 +192,7 @@ export function UploadDropzone({
                 triggerManualParse(uploadedManuscript.id);
               }}
               disabled={isParsing}
-              className="px-3.5 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
+              className="px-3.5 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
             >
               {isParsing ? "Extracting..." : "Extract Content →"}
             </button>
