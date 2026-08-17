@@ -210,12 +210,29 @@ export default function DashboardPage() {
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4 text-right">
-                      <Link
-                        href={`/projects/${m.project_id}/manuscripts/${m.id}/editor`}
-                        className="inline-block px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        Open Editor →
-                      </Link>
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        <Link
+                          href={`/projects/${m.project_id}/manuscripts/${m.id}/editor`}
+                          className="px-2.5 py-1 text-xs font-medium text-foreground bg-card hover:bg-secondary border border-border rounded-lg transition-colors"
+                        >
+                          Editor
+                        </Link>
+                        {m.target_journal_id ? (
+                          <Link
+                            href={`/projects/${m.project_id}/manuscripts/${m.id}/preflight`}
+                            className="px-2.5 py-1 text-xs font-semibold text-white bg-[#141413] hover:bg-[#141413]/90 rounded-lg transition-colors shadow-2xs"
+                          >
+                            Pre-flight →
+                          </Link>
+                        ) : (
+                          <Link
+                            href={`/projects/${m.project_id}/manuscripts/${m.id}/journal`}
+                            className="px-2.5 py-1 text-xs font-medium text-foreground bg-card hover:bg-secondary border border-border rounded-lg transition-colors"
+                          >
+                            Journal →
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))

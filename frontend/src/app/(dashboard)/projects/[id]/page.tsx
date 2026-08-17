@@ -166,28 +166,52 @@ export default function ProjectDetailPage({
                       {m.word_count > 0 ? `${m.word_count.toLocaleString()} words` : "-"}
                     </td>
                     <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
-                      {m.target_journal_id ? "Selected" : "Not selected"}
+                      {m.target_journal_id ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#141413]/5 text-[#141413] border border-[#141413]/10">
+                          Target Assigned
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/60 italic">Unassigned</span>
+                      )}
                     </td>
                     <td className="py-3.5 px-4 text-xs text-[#6e6d68]" suppressHydrationWarning>
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
-                    <td className="py-3.5 px-4 text-right space-x-2">
-                      {m.status === "DRAFT" && (
-                        <button
-                          onClick={() => parseMutation.mutate(m.id)}
-                          disabled={parsingId === m.id}
-                          className="px-2.5 py-1 border border-[#141413] bg-white hover:bg-[#f5f3ec] text-[#141413] text-xs font-medium rounded-md transition-colors disabled:opacity-50"
-                        >
-                          {parsingId === m.id ? "Extracting..." : "Extract Content"}
-                        </button>
-                      )}
+                    <td className="py-3.5 px-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5 flex-wrap">
+                        {m.status === "DRAFT" && (
+                          <button
+                            onClick={() => parseMutation.mutate(m.id)}
+                            disabled={parsingId === m.id}
+                            className="px-2.5 py-1 border border-[#141413] bg-white hover:bg-[#f5f3ec] text-[#141413] text-xs font-medium rounded-md transition-colors disabled:opacity-50"
+                          >
+                            {parsingId === m.id ? "Extracting..." : "Extract Content"}
+                          </button>
+                        )}
 
-                      <Link
-                        href={`/projects/${projectId}/manuscripts/${m.id}/editor`}
-                        className="inline-block px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-medium rounded-lg transition-colors"
-                      >
-                        Edit Document →
-                      </Link>
+                        <Link
+                          href={`/projects/${projectId}/manuscripts/${m.id}/editor`}
+                          className="px-2.5 py-1 text-xs font-medium text-foreground bg-card hover:bg-secondary border border-border rounded-lg transition-colors"
+                        >
+                          Editor
+                        </Link>
+
+                        <Link
+                          href={`/projects/${projectId}/manuscripts/${m.id}/journal`}
+                          className="px-2.5 py-1 text-xs font-medium text-foreground bg-card hover:bg-secondary border border-border rounded-lg transition-colors"
+                        >
+                          Journal
+                        </Link>
+
+                        {m.target_journal_id && (
+                          <Link
+                            href={`/projects/${projectId}/manuscripts/${m.id}/preflight`}
+                            className="px-2.5 py-1 text-xs font-semibold text-white bg-[#141413] hover:bg-[#141413]/90 rounded-lg transition-colors shadow-2xs"
+                          >
+                            Pre-flight →
+                          </Link>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
