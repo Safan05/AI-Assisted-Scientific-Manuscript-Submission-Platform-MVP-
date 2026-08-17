@@ -123,16 +123,20 @@ export default function JournalSelectionPage({
         </div>
 
         {manuscript.target_journal_id && (
-          <button
-            onClick={() =>
-              router.push(
-                `/projects/${projectId}/manuscripts/${manuscriptId}/editor`
-              )
-            }
-            className="px-4 py-2 bg-white border border-[#e6e4dc] hover:border-[#141413] text-[#141413] text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0"
-          >
-            Return to Editor →
-          </button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Link
+              href={`/projects/${projectId}/manuscripts/${manuscriptId}/editor`}
+              className="px-3.5 py-2 bg-card border border-border hover:bg-secondary text-foreground text-xs font-medium rounded-xl shadow-2xs transition-colors"
+            >
+              Metadata Editor
+            </Link>
+            <Link
+              href={`/projects/${projectId}/manuscripts/${manuscriptId}/preflight`}
+              className="px-4 py-2 bg-[#141413] hover:bg-[#141413]/90 text-white text-xs font-semibold rounded-xl shadow-sm transition-all flex items-center gap-1.5"
+            >
+              Pre-flight Checks →
+            </Link>
+          </div>
         )}
       </div>
 

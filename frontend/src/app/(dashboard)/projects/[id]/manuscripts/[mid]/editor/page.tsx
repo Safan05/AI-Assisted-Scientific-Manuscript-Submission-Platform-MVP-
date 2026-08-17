@@ -124,12 +124,21 @@ export default function ManuscriptEditorPage({
         </div>
 
         <div className="flex items-center gap-2">
-          <Link
-            href={`/projects/${projectId}/manuscripts/${manuscriptId}/journal`}
-            className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
-          >
-            Choose Target Journal →
-          </Link>
+          {manuscript.target_journal_id ? (
+            <Link
+              href={`/projects/${projectId}/manuscripts/${manuscriptId}/preflight`}
+              className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              Pre-flight Checks →
+            </Link>
+          ) : (
+            <Link
+              href={`/projects/${projectId}/manuscripts/${manuscriptId}/journal`}
+              className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
+            >
+              Choose Target Journal →
+            </Link>
+          )}
 
           <button
             type="button"

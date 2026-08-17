@@ -9,7 +9,50 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from app.models.manuscript import ExtractedMetadata
-from app.schemas.manuscript_ir import ManuscriptIR
+from app.schemas.manuscript_ir import (
+    ManuscriptIR,
+    Author,
+    Affiliation,
+    CorrespondingAuthor,
+    SectionNode,
+    Reference,
+    FundingSource,
+)
+
+
+def metadata_to_ir(meta: Optional[ExtractedMetadata], word_count: int = 0) -> ManuscriptIR:
+    """Converts an ExtractedMetadata ORM row to a typed ManuscriptIR model."""
+    if not meta:
+        return ManuscriptIR(
+            title="Untitled Manuscript",
+            abstract="",
+            word_count=word_count,
+        )
+
+    def _load(cls, items: list) -> list:
+        return [cls(**item) for item in (items or [])]
+
+    return ManuscriptIR(
+        title=meta.title or "Untitled Manuscript",
+        authors=_load(Author, meta.authors),
+        affiliations=_load(Affiliation, meta.affiliations),
+        corresponding_author=(
+            CorrespondingAuthor(**meta.corresponding_author)
+            if meta.corresponding_author
+            else None
+        ),
+        abstract=meta.abstract or "",
+        keywords=meta.keywords or [],
+        sections=_load(SectionNode, meta.sections),
+        references=_load(Reference, meta.references),
+        funding=_load(FundingSource, meta.funding),
+        conflict_of_interest=meta.conflict_of_interest,
+        ethics_statement=meta.ethics_statement,
+        data_availability=meta.data_availability,
+        author_contributions=meta.author_contributions,
+        acknowledgements=meta.acknowledgements,
+        word_count=word_count,
+    )
 
 
 async def get_extracted_metadata(
@@ -28,7 +71,7 @@ async def upsert_extracted_metadata(
 ) -> ExtractedMetadata:
     """
     Create or update the ExtractedMetadata row from a ManuscriptIR object.
-    Uses manuscript_id uniqueness constraint — if a row exists it is updated
+    Uses manuscript_id uniqueness constraint: if a row exists it is updated
     in-place; otherwise a new row is inserted.
     """
     existing = await get_extracted_metadata(session, manuscript_id)
