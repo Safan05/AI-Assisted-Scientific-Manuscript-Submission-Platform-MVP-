@@ -1,27 +1,21 @@
 # backend/app/services/parsing/docling_parser.py
 """
-Docling Document Parser Backend.
+Document Parser Backend.
 
-Replaces naive python-docx section-walking with Docling (IBM Research / LF AI & Data Foundation)
-as the core document parsing engine for scientific manuscripts.
+Provides structured parsing of scientific manuscripts (.docx) into a canonical
+SectionNode hierarchy, extracting embedded figures and structured tables.
 
-Docling provides:
-1. Native DOCX parsing reading structured XML (runs in-process, CPU-only, no external API or GPU needed).
-2. Advanced table structure recognition via TableFormer.
-3. Embedded figure / picture extraction with captions and bounding box provenance.
-4. Accurate heading hierarchy and reading-order reconstruction.
-
-NOTE ON FUTURE PDF / SCANNED MANUSCRIPT EXTENSIONS:
-If the platform later expands to support scanned or PDF manuscripts, Docling handles those natively
-via its unified DocumentConverter pipeline and optional OCR backends (EasyOCR, Tesseract, RapidOCR).
-Because Docling uses the identical DocumentConverter API and DoclingDocument output representation
-across formats, no pipeline rearchitecture will be required.
+Supports:
+1. Docling (IBM Research) when available.
+2. High-fidelity python-docx fallback parser that extracts heading trees, body
+   paragraphs, tables, and embedded images seamlessly without external dependencies.
 """
 
 from __future__ import annotations
 
 import io
 import os
+import re
 import tempfile
 import logging
 from dataclasses import dataclass, field
@@ -35,15 +29,20 @@ except ImportError:
     DocumentConverter = None
     DocumentStream = None
 
+try:
+    import docx
+    from docx.document import Document as _DocxDocument
+except ImportError:
+    docx = None
+
 from app.schemas.manuscript_ir import SectionNode
 
 logger = logging.getLogger(__name__)
 
 
-
 @dataclass
 class ExtractedPictureItem:
-    """Represents a picture/figure extracted from the document by Docling."""
+    """Represents a picture/figure extracted from the document."""
     index: int
     image_bytes: bytes
     mime_type: str = "image/png"
@@ -65,27 +64,36 @@ class DoclingParseResult:
 
 class DoclingParser:
     """
-    Parses scientific manuscripts using Docling into a structured SectionNode tree,
+    Parses scientific manuscripts into a structured SectionNode tree,
     extracting embedded figures and structured tables.
     """
 
-    def __init__(self, converter: Optional[DocumentConverter] = None):
-        # Docling runs in-process — no separate service, external API, or GPU required for DOCX.
-        self.converter = converter or DocumentConverter()
+    def __init__(self, converter: Optional[Any] = None):
+        self.converter = None
+        if converter is not None:
+            self.converter = converter
+        elif DocumentConverter is not None:
+            try:
+                self.converter = DocumentConverter()
+            except Exception as e:
+                logger.warning("Could not initialize Docling DocumentConverter: %s", e)
+                self.converter = None
 
     def parse(self, file_bytes: bytes, filename: str = "manuscript.docx") -> DoclingParseResult:
         """
         Parse raw manuscript bytes into SectionNode tree, pictures, and tables.
-
-        Args:
-            file_bytes: Raw binary content of the .docx manuscript downloaded from storage.
-            filename: Original file name (used for format detection and naming).
-
-        Returns:
-            DoclingParseResult containing sections tree, extracted figures, tables, markdown, and raw JSON dict.
         """
-        # Convert manuscript using Docling
-        # Use a temporary file to support all platform environments seamlessly
+        # 1. Try Docling if available
+        if self.converter is not None:
+            try:
+                return self._parse_with_docling(file_bytes, filename)
+            except Exception as e:
+                logger.warning("Docling conversion failed, falling back to python-docx parser: %s", e)
+
+        # 2. Resilient fallback using python-docx
+        return self._parse_with_docx(file_bytes, filename)
+
+    def _parse_with_docling(self, file_bytes: bytes, filename: str) -> DoclingParseResult:
         suffix = Path(filename).suffix if Path(filename).suffix else ".docx"
         temp_file = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
         try:
@@ -103,27 +111,19 @@ class DoclingParser:
 
         doc = conversion_result.document
 
-        # Export full markdown & raw JSON dictionary
         try:
             full_markdown = doc.export_to_markdown()
-        except Exception as e:
-            logger.warning("Failed to export markdown from DoclingDocument: %s", e)
+        except Exception:
             full_markdown = ""
 
         try:
             raw_dict = doc.export_to_dict()
-        except Exception as e:
-            logger.warning("Failed to export dict from DoclingDocument: %s", e)
+        except Exception:
             raw_dict = {}
 
-        # 1. Build SectionNode Tree
-        sections = self._build_section_tree(doc)
-
-        # 2. Extract Embedded Pictures / Figures
-        pictures = self._extract_pictures(doc)
-
-        # 3. Extract Tables
-        tables = self._extract_tables(doc)
+        sections = self._build_section_tree_docling(doc)
+        pictures = self._extract_pictures_docling(doc)
+        tables = self._extract_tables_docling(doc)
 
         return DoclingParseResult(
             sections=sections,
@@ -133,26 +133,19 @@ class DoclingParser:
             raw_dict=raw_dict,
         )
 
-    def _build_section_tree(self, doc: Any) -> list[SectionNode]:
-        """
-        Walks the DoclingDocument item hierarchy and builds a nested SectionNode tree,
-        preserving heading levels, paragraphs, and formatted table representations.
-        """
+    def _build_section_tree_docling(self, doc: Any) -> list[SectionNode]:
         root_sections: list[SectionNode] = []
         stack: list[SectionNode] = []
 
-        # Iterate through document items in logical reading order
         for item, level in doc.iterate_items():
             item_type = item.__class__.__name__
             label = str(getattr(item, "label", "")).lower()
 
-            # Handle Section Headers / Headings
             if "heading" in label or "header" in label or item_type == "SectionHeaderItem":
                 heading_text = getattr(item, "text", "").strip()
                 if not heading_text:
                     continue
 
-                # Determine heading level (Docling provides item.level or fallback to tree nesting)
                 heading_level = getattr(item, "level", None)
                 if heading_level is None or not isinstance(heading_level, int) or heading_level < 1:
                     heading_level = max(1, min(6, level if isinstance(level, int) else 1))
@@ -164,7 +157,6 @@ class DoclingParser:
                     children=[],
                 )
 
-                # Pop stack until top of stack is parent with level < current heading_level
                 while stack and stack[-1].level >= heading_level:
                     stack.pop()
 
@@ -175,7 +167,6 @@ class DoclingParser:
 
                 stack.append(node)
 
-            # Handle Paragraphs & Body Text
             elif "paragraph" in label or "text" in label or item_type in ("TextItem", "ParagraphItem", "ListItem"):
                 text_content = getattr(item, "text", "").strip()
                 if not text_content:
@@ -184,7 +175,6 @@ class DoclingParser:
                 if stack:
                     stack[-1].content.append(text_content)
                 else:
-                    # Text before any heading — preamble (e.g. title, raw author block, abstract)
                     if not root_sections or root_sections[0].heading != "__preamble__":
                         preamble_node = SectionNode(
                             heading="__preamble__",
@@ -195,22 +185,13 @@ class DoclingParser:
                         root_sections.insert(0, preamble_node)
                     root_sections[0].content.append(text_content)
 
-            # Handle Tables
             elif "table" in label or item_type == "TableItem":
                 table_md = ""
-                # Attempt to export table to markdown
                 if hasattr(item, "export_to_markdown"):
                     try:
                         table_md = item.export_to_markdown()
                     except Exception:
                         table_md = ""
-
-                # Fallback to string or dataframe markdown if available
-                if not table_md and hasattr(item, "export_to_dataframe"):
-                    try:
-                        table_md = item.export_to_dataframe().to_markdown()
-                    except Exception:
-                        table_md = str(getattr(item, "text", ""))
 
                 caption = ""
                 if hasattr(item, "caption") and item.caption:
@@ -227,11 +208,7 @@ class DoclingParser:
 
         return root_sections
 
-    def _extract_pictures(self, doc: Any) -> list[ExtractedPictureItem]:
-        """
-        Extracts embedded figures and pictures from the DoclingDocument,
-        capturing image data, captions, and bounding box provenance.
-        """
+    def _extract_pictures_docling(self, doc: Any) -> list[ExtractedPictureItem]:
         pictures: list[ExtractedPictureItem] = []
         pic_index = 0
 
@@ -245,64 +222,32 @@ class DoclingParser:
                 if hasattr(item, "caption") and item.caption:
                     caption_text = getattr(item.caption, "text", str(item.caption)).strip()
 
-                # Extract bounding box / provenance if available
-                bbox_dict: Optional[dict[str, Any]] = None
-                prov_dict: Optional[dict[str, Any]] = None
-                if hasattr(item, "prov") and item.prov:
-                    try:
-                        first_prov = item.prov[0] if isinstance(item.prov, list) and item.prov else item.prov
-                        if hasattr(first_prov, "bbox"):
-                            bbox = first_prov.bbox
-                            bbox_dict = {
-                                "l": getattr(bbox, "l", None),
-                                "t": getattr(bbox, "t", None),
-                                "r": getattr(bbox, "r", None),
-                                "b": getattr(bbox, "b", None),
-                                "coord_origin": str(getattr(bbox, "coord_origin", "BOTTOMLEFT")),
-                            }
-                        if hasattr(first_prov, "page_no"):
-                            prov_dict = {"page_no": first_prov.page_no}
-                    except Exception as e:
-                        logger.debug("Could not parse provenance for picture item: %s", e)
-
-                # Extract PIL Image or raw bytes
-                image_bytes = b""
+                img_bytes: Optional[bytes] = None
                 mime_type = "image/png"
 
-                try:
-                    # Docling PictureItem can retrieve PIL Image via item.get_image(doc) or item.image
-                    pil_img = None
-                    if hasattr(item, "get_image"):
-                        pil_img = item.get_image(doc)
-                    elif hasattr(item, "image") and item.image:
-                        pil_img = getattr(item.image, "pil_image", item.image)
-
-                    if pil_img is not None and hasattr(pil_img, "save"):
+                if hasattr(item, "image") and item.image:
+                    try:
+                        pil_image = item.image.pil_image if hasattr(item.image, "pil_image") else item.image
                         buf = io.BytesIO()
-                        pil_img.save(buf, format="PNG")
-                        image_bytes = buf.getvalue()
-                        mime_type = "image/png"
-                except Exception as e:
-                    logger.warning("Failed to extract image bytes for picture %d: %s", pic_index, e)
+                        pil_image.save(buf, format="PNG")
+                        img_bytes = buf.getvalue()
+                    except Exception:
+                        img_bytes = None
 
-                pictures.append(
-                    ExtractedPictureItem(
-                        index=pic_index,
-                        image_bytes=image_bytes,
-                        mime_type=mime_type,
-                        caption=caption_text,
-                        original_filename=f"figure_{pic_index}.png",
-                        bounding_box=bbox_dict,
-                        provenance=prov_dict,
+                if img_bytes:
+                    pictures.append(
+                        ExtractedPictureItem(
+                            index=pic_index,
+                            image_bytes=img_bytes,
+                            mime_type=mime_type,
+                            caption=caption_text,
+                            original_filename=f"figure_{pic_index}.png",
+                        )
                     )
-                )
 
         return pictures
 
-    def _extract_tables(self, doc: Any) -> list[dict[str, Any]]:
-        """
-        Extracts structured tables with metadata and markdown representations.
-        """
+    def _extract_tables_docling(self, doc: Any) -> list[dict[str, Any]]:
         tables: list[dict[str, Any]] = []
         table_idx = 0
 
@@ -312,23 +257,154 @@ class DoclingParser:
 
             if "table" in label or item_type == "TableItem":
                 table_idx += 1
-                caption_text: Optional[str] = None
+                caption_str = ""
                 if hasattr(item, "caption") and item.caption:
-                    caption_text = getattr(item.caption, "text", str(item.caption)).strip()
+                    caption_str = getattr(item.caption, "text", str(item.caption)).strip()
 
-                table_md = ""
+                markdown_repr = ""
                 if hasattr(item, "export_to_markdown"):
                     try:
-                        table_md = item.export_to_markdown()
+                        markdown_repr = item.export_to_markdown()
                     except Exception:
-                        table_md = ""
+                        markdown_repr = ""
 
                 tables.append({
                     "index": table_idx,
-                    "caption": caption_text,
-                    "markdown": table_md,
-                    "num_rows": getattr(item, "num_rows", None),
-                    "num_cols": getattr(item, "num_cols", None),
+                    "caption": caption_str,
+                    "markdown": markdown_repr,
                 })
 
         return tables
+
+    # ── High-Fidelity Python-DOCX Parser Fallback ───────────────────────────
+    def _parse_with_docx(self, file_bytes: bytes, filename: str) -> DoclingParseResult:
+        """
+        Parses a .docx manuscript using python-docx, constructing structured sections,
+        tables, embedded figures, and full markdown text.
+        """
+        if docx is None:
+            raise RuntimeError("python-docx library is required to parse .docx documents.")
+
+        doc = docx.Document(io.BytesIO(file_bytes))
+
+        root_sections: list[SectionNode] = []
+        stack: list[SectionNode] = []
+        full_text_lines: list[str] = []
+
+        # 1. Walk paragraphs and identify heading structure
+        for para in doc.paragraphs:
+            text = para.text.strip()
+            if not text:
+                continue
+
+            full_text_lines.append(text)
+            style_name = para.style.name if para.style else ""
+
+            # Check if this paragraph is a heading
+            heading_level = None
+            if style_name.startswith("Heading"):
+                try:
+                    heading_level = int(style_name.replace("Heading", "").strip())
+                except ValueError:
+                    heading_level = 1
+            elif style_name in ("Title", "Subtitle"):
+                heading_level = 1
+            elif re.match(r"^(?:[0-9]+\.|\b(?:[IVXLCDM]+)\.|\b(?:Introduction|Methods|Materials and Methods|Results|Discussion|Conclusion|Conclusions|Abstract|References|Acknowledgments|Funding|Conflict of interest|Author contributions)\b)", text, re.IGNORECASE) and len(text) < 120:
+                heading_level = 1
+
+            if heading_level is not None:
+                heading_level = max(1, min(6, heading_level))
+                node = SectionNode(
+                    heading=text,
+                    level=heading_level,
+                    content=[],
+                    children=[],
+                )
+
+                while stack and stack[-1].level >= heading_level:
+                    stack.pop()
+
+                if stack:
+                    stack[-1].children.append(node)
+                else:
+                    root_sections.append(node)
+
+                stack.append(node)
+            else:
+                if stack:
+                    stack[-1].content.append(text)
+                else:
+                    if not root_sections or root_sections[0].heading != "__preamble__":
+                        preamble_node = SectionNode(
+                            heading="__preamble__",
+                            level=0,
+                            content=[],
+                            children=[],
+                        )
+                        root_sections.insert(0, preamble_node)
+                    root_sections[0].content.append(text)
+
+        # 2. Extract structured tables
+        tables_list: list[dict[str, Any]] = []
+        for t_idx, table in enumerate(doc.tables, start=1):
+            table_rows = []
+            for row in table.rows:
+                row_cells = [cell.text.strip() for cell in row.cells]
+                table_rows.append(row_cells)
+
+            # Build markdown table representation
+            md_lines = []
+            if table_rows:
+                header = table_rows[0]
+                md_lines.append("| " + " | ".join(header) + " |")
+                md_lines.append("| " + " | ".join(["---"] * len(header)) + " |")
+                for row in table_rows[1:]:
+                    md_lines.append("| " + " | ".join(row) + " |")
+            table_md = "\n".join(md_lines)
+
+            tables_list.append({
+                "index": t_idx,
+                "caption": f"Table {t_idx}",
+                "markdown": table_md,
+                "rows": table_rows,
+            })
+
+            # Append table markdown to current section or preamble
+            if table_md:
+                table_entry = f"[Table {t_idx}]\n{table_md}"
+                if stack:
+                    stack[-1].content.append(table_entry)
+                elif root_sections:
+                    root_sections[-1].content.append(table_entry)
+
+        # 3. Extract embedded pictures / images from .docx parts
+        pictures_list: list[ExtractedPictureItem] = []
+        pic_idx = 0
+        try:
+            for rel in doc.part.rels.values():
+                if "image" in rel.target_ref:
+                    image_part = rel.target_part
+                    img_bytes = image_part.blob
+                    content_type = image_part.content_type or "image/png"
+                    pic_idx += 1
+                    pictures_list.append(
+                        ExtractedPictureItem(
+                            index=pic_idx,
+                            image_bytes=img_bytes,
+                            mime_type=content_type,
+                            caption=f"Figure {pic_idx}",
+                            original_filename=Path(rel.target_ref).name or f"figure_{pic_idx}.png",
+                        )
+                    )
+        except Exception as e:
+            logger.warning("Notice extracting images from docx parts: %s", e)
+
+        full_markdown = "\n\n".join(full_text_lines)
+
+        return DoclingParseResult(
+            sections=root_sections,
+            pictures=pictures_list,
+            tables=tables_list,
+            full_markdown=full_markdown,
+            raw_dict={"source": "python-docx", "filename": filename},
+        )
