@@ -700,7 +700,7 @@ swiss2/
 │   │   │   ├── manuscript_service.py # Upload, status transitions, orchestration
 │   │   │   ├── parsing/
 │   │   │   │   ├── __init__.py
-│   │   │   │   ├── docx_parser.py   # python-docx → raw section tree
+│   │   │   │   ├── docling_parser.py # Docling → structured section tree, tables & figures
 │   │   │   │   ├── metadata_extractor.py  # Heuristic + LLM metadata extraction
 │   │   │   │   └── image_extractor.py     # Extract embedded images → storage
 │   │   │   ├── preflight/
@@ -848,7 +848,7 @@ Each module is a self-contained unit with **Prerequisites**, **Files to Create/M
    # Create pyproject.toml with dependencies:
    # fastapi, uvicorn[standard], sqlmodel, asyncpg, alembic,
    # python-jose[cryptography], passlib[bcrypt], pydantic-settings,
-   # boto3, python-docx, mammoth, docxcompose, openai, anthropic,
+   # boto3, python-docx, mammoth, docxcompose, docling, openai, anthropic,
    # python-multipart, httpx, pytest, pytest-asyncio
    ```
 
@@ -988,15 +988,21 @@ curl -X POST http://localhost:8000/api/v1/projects/{project_id}/manuscripts \
 
 ### Module 4: Parsing Engine & Metadata Extraction
 
-> **Goal**: Parse uploaded .docx into the ManuscriptIR schema, extract images, and populate `extracted_metadata`.
+> **Goal**: Parse uploaded .docx into the ManuscriptIR schema using Docling, extract embedded figures/tables, and populate `extracted_metadata`.
+
+#### Parsing Engine: Docling Integration Overview
+- **Backend**: [Docling](https://github.com/docling-project/docling) (IBM Research / LF AI & Data Foundation, MIT License).
+- **Runtime**: In-process Python library (`pip install docling`) — runs CPU-only, no external microservice, no external API keys or GPU required for DOCX parsing (reads native document structure).
+- **Capabilities**: Preserves heading hierarchy, extracts structured tables (with TableFormer recognition), and captures embedded figures with bounding boxes and captions.
+- **Future-Proofing / PDF Support**: If the project later needs to support scanned or PDF manuscripts, Docling natively handles them via its PDF pipeline and optional OCR backends (EasyOCR/Tesseract/RapidOCR) using the exact same `DocumentConverter` API and `DoclingDocument` representation without requiring pipeline rearchitecture.
 
 #### Files to Create
 | File | Purpose |
 |------|---------|
 | `app/schemas/manuscript_ir.py` | Full IR schema (Section 2 above) |
-| `app/services/parsing/docx_parser.py` | Heading hierarchy extraction via `python-docx` |
-| `app/services/parsing/metadata_extractor.py` | Heuristic + optional LLM metadata extraction |
-| `app/services/parsing/image_extractor.py` | Extract embedded images → upload to storage |
+| `app/services/parsing/docling_parser.py` | Document parsing, heading hierarchy, table & figure extraction via `Docling` |
+| `app/services/parsing/metadata_extractor.py` | Heuristic + optional LLM metadata extraction operating on structured tree |
+| `app/services/parsing/image_extractor.py` | Upload Docling-extracted pictures/figures → `ManuscriptAsset` records in storage |
 | `app/services/llm/*` | LLM abstraction (Section 4 above) |
 | `app/api/v1/endpoints/parsing.py` | Trigger parsing route |
 
@@ -1006,10 +1012,10 @@ curl -X POST http://localhost:8000/api/v1/projects/{project_id}/manuscripts \
 POST /api/v1/manuscripts/{id}/parse
     → ManuscriptService.parse()
         1. StorageService.download(manuscript.storage_key) → raw bytes
-        2. DocxParser.parse(bytes) → raw section tree (SectionNode[])
-        3. ImageExtractor.extract(bytes) → ManuscriptAsset[] (uploaded to storage)
-        4. MetadataExtractor.extract(raw_tree)
-            a. Heuristic pass: regex-based title/author/keyword detection
+        2. DoclingParser.parse(bytes) → DoclingParseResult (SectionNode[] tree, pictures, tables, markdown, raw JSON dict)
+        3. ImageExtractor.extract(docling_result.pictures, manuscript_id) → ManuscriptAsset[] (uploaded to storage)
+        4. MetadataExtractor.extract(docling_result.sections)
+            a. Heuristic pass: regex-based title/author/keyword detection on structured tree
             b. LLM pass (if heuristics insufficient): structured extraction
         5. Build ManuscriptIR object
         6. Save to extracted_metadata table + raw_parsed_json on manuscript
@@ -1017,42 +1023,144 @@ POST /api/v1/manuscripts/{id}/parse
         → Return ManuscriptIR
 ```
 
-#### DocxParser Core Logic
+#### DoclingParser Core Logic
 ```python
-class DocxParser:
-    def parse(self, file_bytes: bytes) -> list[SectionNode]:
-        doc = Document(BytesIO(file_bytes))
-        root_children: list[SectionNode] = []
+import io
+import os
+import tempfile
+from dataclasses import dataclass, field
+from typing import Optional, Any
+from pathlib import Path
+from docling.document_converter import DocumentConverter
+from app.schemas.manuscript_ir import SectionNode
+
+@dataclass
+class ExtractedPictureItem:
+    index: int
+    image_bytes: bytes
+    mime_type: str = "image/png"
+    caption: Optional[str] = None
+    original_filename: Optional[str] = None
+    bounding_box: Optional[dict[str, Any]] = None
+    provenance: Optional[dict[str, Any]] = None
+
+@dataclass
+class DoclingParseResult:
+    sections: list[SectionNode] = field(default_factory=list)
+    pictures: list[ExtractedPictureItem] = field(default_factory=list)
+    tables: list[dict[str, Any]] = field(default_factory=list)
+    full_markdown: str = ""
+    raw_dict: dict[str, Any] = field(default_factory=dict)
+
+class DoclingParser:
+    """
+    Parses scientific manuscripts using Docling into a structured SectionNode tree,
+    extracting embedded figures and structured tables.
+    Runs in-process — no separate service, external API, or GPU required for DOCX.
+    """
+    def __init__(self, converter: Optional[DocumentConverter] = None):
+        self.converter = converter or DocumentConverter()
+
+    def parse(self, file_bytes: bytes, filename: str = "manuscript.docx") -> DoclingParseResult:
+        suffix = Path(filename).suffix if Path(filename).suffix else ".docx"
+        temp_file = tempfile.NamedTemporaryFile(suffix=suffix, delete=False)
+        try:
+            temp_file.write(file_bytes)
+            temp_file.flush()
+            temp_file.close()
+
+            conversion_result = self.converter.convert(temp_file.name)
+        finally:
+            if os.path.exists(temp_file.name):
+                os.unlink(temp_file.name)
+
+        doc = conversion_result.document
+        full_markdown = doc.export_to_markdown() if hasattr(doc, "export_to_markdown") else ""
+        raw_dict = doc.export_to_dict() if hasattr(doc, "export_to_dict") else {}
+
+        # 1. Build SectionNode hierarchy tree
+        root_sections: list[SectionNode] = []
         stack: list[SectionNode] = []
 
-        for para in doc.paragraphs:
-            style = para.style.name
-            if style.startswith("Heading"):
-                level = int(style.split()[-1])
-                node = SectionNode(heading=para.text, level=level)
+        for item, level in doc.iterate_items():
+            item_type = item.__class__.__name__
+            label = str(getattr(item, "label", "")).lower()
 
-                # Pop stack to find parent
-                while stack and stack[-1].level >= level:
+            if "heading" in label or "header" in label or item_type == "SectionHeaderItem":
+                heading_text = getattr(item, "text", "").strip()
+                if not heading_text:
+                    continue
+
+                heading_level = getattr(item, "level", None)
+                if heading_level is None or not isinstance(heading_level, int) or heading_level < 1:
+                    heading_level = max(1, min(6, level if isinstance(level, int) else 1))
+
+                node = SectionNode(heading=heading_text, level=heading_level, content=[], children=[])
+
+                while stack and stack[-1].level >= heading_level:
                     stack.pop()
 
                 if stack:
                     stack[-1].children.append(node)
                 else:
-                    root_children.append(node)
+                    root_sections.append(node)
                 stack.append(node)
 
-            elif para.text.strip():
-                if stack:
-                    stack[-1].content.append(para.text)
-                else:
-                    # Content before any heading — preamble
-                    if not root_children or root_children[-1].heading != "__preamble__":
-                        root_children.insert(0, SectionNode(
-                            heading="__preamble__", level=0
-                        ))
-                    root_children[0].content.append(para.text)
+            elif "paragraph" in label or "text" in label or item_type in ("TextItem", "ParagraphItem", "ListItem"):
+                text_content = getattr(item, "text", "").strip()
+                if not text_content:
+                    continue
 
-        return root_children
+                if stack:
+                    stack[-1].content.append(text_content)
+                else:
+                    if not root_sections or root_sections[0].heading != "__preamble__":
+                        root_sections.insert(0, SectionNode(heading="__preamble__", level=0, content=[], children=[]))
+                    root_sections[0].content.append(text_content)
+
+            elif "table" in label or item_type == "TableItem":
+                table_md = item.export_to_markdown() if hasattr(item, "export_to_markdown") else ""
+                caption = getattr(item.caption, "text", str(item.caption)).strip() if getattr(item, "caption", None) else ""
+                table_entry = f"[Table: {caption}]\n{table_md}" if caption else table_md
+                if table_entry.strip():
+                    if stack:
+                        stack[-1].content.append(table_entry)
+                    else:
+                        if not root_sections or root_sections[0].heading != "__preamble__":
+                            root_sections.insert(0, SectionNode(heading="__preamble__", level=0, content=[], children=[]))
+                        root_sections[0].content.append(table_entry)
+
+        # 2. Extract Pictures / Figures
+        pictures: list[ExtractedPictureItem] = []
+        pic_idx = 0
+        for item, _ in doc.iterate_items():
+            if "picture" in str(getattr(item, "label", "")).lower() or item.__class__.__name__ == "PictureItem":
+                pic_idx += 1
+                caption = getattr(item.caption, "text", str(item.caption)).strip() if getattr(item, "caption", None) else None
+                image_bytes = b""
+                try:
+                    pil_img = item.get_image(doc) if hasattr(item, "get_image") else getattr(getattr(item, "image", None), "pil_image", None)
+                    if pil_img and hasattr(pil_img, "save"):
+                        buf = io.BytesIO()
+                        pil_img.save(buf, format="PNG")
+                        image_bytes = buf.getvalue()
+                except Exception:
+                    pass
+
+                pictures.append(ExtractedPictureItem(
+                    index=pic_idx,
+                    image_bytes=image_bytes,
+                    caption=caption,
+                    original_filename=f"figure_{pic_idx}.png"
+                ))
+
+        return DoclingParseResult(
+            sections=root_sections,
+            pictures=pictures,
+            tables=[],
+            full_markdown=full_markdown,
+            raw_dict=raw_dict
+        )
 ```
 
 #### Verification
