@@ -152,7 +152,7 @@ PLOS_ONE_SEED = {
     },
     "reference_format": {
         "style": "plos_vancouver",
-        "citation_style": "bracketed_numbers",  # [1], [2] — not superscripts
+        "citation_style": "bracketed_numbers",  # [1], [2] - not superscripts
         "guideline_max_count": None,           # No reference count limit
     },
     "formatting_rules": {
@@ -200,7 +200,7 @@ PLOS_ONE_SEED = {
                 "_source": "https://journals.plos.org/plosone/s/submission-guidelines",
             },
             "severity": "WARN",
-            "message": "Abstract may contain citations — PLOS ONE requires an unstructured abstract with no citations.",
+            "message": "Abstract may contain citations: PLOS ONE requires an unstructured abstract with no citations.",
             "sort_order": 2,
         },
         # Mandatory Data Availability Statement
@@ -213,7 +213,7 @@ PLOS_ONE_SEED = {
                 "_source": "https://journals.plos.org/plosone/s/data-availability",
             },
             "severity": "FAIL",
-            "message": "PLOS ONE requires a Data Availability Statement for every submission — this is currently missing or empty.",
+            "message": "PLOS ONE requires a Data Availability Statement for every submission (currently missing or empty).",
             "sort_order": 3,
         },
         # Note: No main_text_word_limit rule seeded here because PLOS ONE has no main text limit.
