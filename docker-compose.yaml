@@ -1,17 +1,63 @@
 version: '3.8'
 
 services:
-  db:
+  postgres:
     image: postgres:16-alpine
+    container_name: swiss2-postgres
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: pass
-      POSTGRES_DB: swiss2
+      POSTGRES_USER: swiss_user
+      POSTGRES_PASSWORD: swiss_password
+      POSTGRES_DB: swiss_manuscripts
     ports:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U swiss_user -d swiss_manuscripts"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: swiss2-backend
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://swiss_user:swiss_password@postgres:5432/swiss_manuscripts
+      - JWT_SECRET_KEY=dev-secret-key-change-in-production-12345678901234567890
+      - JWT_ALGORITHM=HS256
+      - JWT_ACCESS_TOKEN_EXPIRE_MINUTES=10080
+      - JWT_REFRESH_TOKEN_EXPIRE_DAYS=7
+      - STORAGE_PROVIDER=local
+      - LOCAL_STORAGE_DIR=/app/data/storage
+      - LLM_PROVIDER=openai
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - backend_storage:/app/data/storage
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    container_name: swiss2-frontend
+    environment:
+      - NEXT_PUBLIC_API_URL=http://localhost:8000/api/v1
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
     restart: unless-stopped
 
 volumes:
   postgres_data:
+  backend_storage:
