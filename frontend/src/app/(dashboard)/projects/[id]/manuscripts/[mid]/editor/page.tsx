@@ -134,6 +134,13 @@ export default function ManuscriptEditorPage({
         </div>
 
         <div className="flex items-center gap-3">
+          <Link
+            href={`/projects/${projectId}/manuscripts/${manuscriptId}/journal`}
+            className="px-3 py-1 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-[11px] font-mono font-medium uppercase tracking-wider transition-colors"
+          >
+            [ 04 · SELECT TARGET JOURNAL → ]
+          </Link>
+
           <button
             type="button"
             onClick={() => setShowAssets(!showAssets)}
@@ -143,6 +150,7 @@ export default function ManuscriptEditorPage({
           </button>
         </div>
       </div>
+
 
       {/* ── Manuscript Header Card ─────────────────────────────────── */}
       <div className="border-b border-[#E0E0E0] pb-5 flex flex-col md:flex-row justify-between md:items-end gap-4">
