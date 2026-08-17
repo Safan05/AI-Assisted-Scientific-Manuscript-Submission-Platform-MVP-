@@ -168,7 +168,7 @@ export default function ProjectDetailPage({
                     <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
                       {m.target_journal_id ? "Selected" : "Not selected"}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
+                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]" suppressHydrationWarning>
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4 text-right space-x-2">

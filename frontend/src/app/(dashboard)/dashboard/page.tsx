@@ -179,7 +179,7 @@ export default function DashboardPage() {
                     <td className="py-3.5 px-4 font-mono text-xs text-[#6e6d68]">
                       {m.word_count > 0 ? `${m.word_count.toLocaleString()} words` : "-"}
                     </td>
-                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
+                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]" suppressHydrationWarning>
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4 text-right">

@@ -184,7 +184,7 @@ export default function ProjectsPage() {
                 </div>
 
                 <div className="mt-6 pt-4 border-t border-[#e6e4dc] flex justify-between items-center text-xs text-[#8c8b85]">
-                  <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                  <span suppressHydrationWarning>{new Date(project.created_at).toLocaleDateString()}</span>
                   <span className="text-[#141413] font-medium group-hover:underline">
                     View Project →
                   </span>
