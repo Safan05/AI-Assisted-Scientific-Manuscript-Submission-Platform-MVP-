@@ -51,18 +51,15 @@ export default function ProjectsPage() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* ── Header ─────────────────────────────────────────────────── */}
-      <div className="border-b border-[#E0E0E0] pb-6 flex justify-between items-end">
+      <div className="border-b border-[#e6e4dc] pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <div className="font-mono text-xs text-[#707070] uppercase tracking-wider mb-1">
-            PROJECTS // 02
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#111111]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#141413]">
             Research Projects
           </h1>
-          <p className="text-xs text-[#707070] mt-1">
-            Organize manuscripts into project workspaces for journal standardization.
+          <p className="text-sm text-[#6e6d68] mt-1">
+            Organize your scientific manuscripts into research projects.
           </p>
         </div>
 
@@ -71,33 +68,33 @@ export default function ProjectsPage() {
             setIsCreating(!isCreating);
             setError(null);
           }}
-          className="px-4 py-2 border border-[#111111] bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono font-medium uppercase tracking-wider transition-colors"
+          className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          {isCreating ? "[ CANCEL ]" : "[ + NEW PROJECT ]"}
+          {isCreating ? "Cancel" : "+ New Project"}
         </button>
       </div>
 
-      {/* ── Inline Creation Panel (Swiss Style Hairline Drawer) ────── */}
+      {/* ── Inline Creation Panel ─────────────────────────────────── */}
       {isCreating && (
-        <div className="border border-[#111111] bg-white p-6 transition-all">
-          <div className="flex justify-between items-center mb-4 border-b border-[#E0E0E0] pb-3">
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-              [ CREATE NEW RESEARCH PROJECT ]
-            </span>
-            <span className="font-mono text-[11px] text-[#707070]">
-              WORKSPACE REGISTRATION
+        <div className="bg-white border border-[#e6e4dc] rounded-xl p-6 shadow-sm transition-all">
+          <div className="flex justify-between items-center mb-4 border-b border-[#e6e4dc] pb-3">
+            <h2 className="text-sm font-semibold text-[#141413]">
+              Create New Project
+            </h2>
+            <span className="text-xs text-[#6e6d68]">
+              Project Workspace
             </span>
           </div>
 
           {error && (
-            <div className="mb-4 p-2.5 border border-[#D0021B] bg-[rgba(208,2,27,0.05)] text-[#D0021B] text-xs font-mono">
-              [ ERROR ] {error}
+            <div className="mb-4 p-3 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+              {error}
             </div>
           )}
 
           <form onSubmit={handleCreateSubmit} className="space-y-4 max-w-2xl">
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-1 font-mono">
+              <label className="block text-xs font-medium text-[#141413] mb-1">
                 Project Name *
               </label>
               <input
@@ -105,21 +102,21 @@ export default function ProjectsPage() {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="e.g. Deep Learning in Chest CT Radiomics"
-                className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none"
+                placeholder="e.g. Deep Learning for Medical Imaging"
+                className="w-full px-3.5 py-2 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-1 font-mono">
+              <label className="block text-xs font-medium text-[#141413] mb-1">
                 Description / Research Scope
               </label>
               <textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Targeting submission to Radiology or Medical Image Analysis..."
-                className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none"
+                placeholder="Brief summary of study scope, methodologies, or target journals..."
+                className="w-full px-3.5 py-2 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
               />
             </div>
 
@@ -127,16 +124,14 @@ export default function ProjectsPage() {
               <button
                 type="submit"
                 disabled={createMutation.isPending}
-                className="px-4 py-2 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono font-medium uppercase tracking-wider transition-colors disabled:opacity-50"
+                className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
               >
-                {createMutation.isPending
-                  ? "[ REGISTERING... ]"
-                  : "[ SAVE PROJECT → ]"}
+                {createMutation.isPending ? "Creating..." : "Save Project"}
               </button>
               <button
                 type="button"
                 onClick={() => setIsCreating(false)}
-                className="px-4 py-2 border border-[#E0E0E0] bg-white text-[#707070] hover:text-[#111111] text-xs font-mono uppercase tracking-wider"
+                className="px-4 py-2 border border-[#e6e4dc] bg-white hover:bg-[#f5f3ec] text-[#6e6d68] text-xs font-medium rounded-lg"
               >
                 Cancel
               </button>
@@ -147,60 +142,51 @@ export default function ProjectsPage() {
 
       {/* ── Project List Grid ───────────────────────────────────────── */}
       <div>
-        <div className="text-[11px] font-mono uppercase tracking-widest text-[#707070] mb-4">
-          REGISTERED WORKSPACES ({projects?.length || 0})
+        <div className="text-xs font-semibold text-[#8c8b85] uppercase tracking-wider mb-4">
+          Your Projects ({projects?.length || 0})
         </div>
 
         {isLoading ? (
-          <div className="p-12 border border-[#E0E0E0] bg-white text-center font-mono text-xs text-[#707070]">
-            [ QUERYING WORKSPACES... ]
+          <div className="p-12 bg-white border border-[#e6e4dc] rounded-xl text-center text-xs text-[#6e6d68]">
+            Loading projects...
           </div>
         ) : !projects || projects.length === 0 ? (
-          <div className="p-12 border border-dashed border-[#E0E0E0] bg-white text-center">
-            <div className="font-mono text-xs text-[#707070] uppercase mb-2">
-              [ NO PROJECTS FOUND ]
-            </div>
-            <p className="text-sm text-[#111111] font-medium mb-4">
-              Get started by creating your first research project workspace.
+          <div className="p-12 bg-white border border-dashed border-[#e6e4dc] rounded-xl text-center">
+            <h2 className="text-base font-semibold text-[#141413] mb-1">
+              No projects yet
+            </h2>
+            <p className="text-xs text-[#6e6d68] mb-4">
+              Get started by creating your first research project.
             </p>
             <button
               onClick={() => setIsCreating(true)}
-              className="px-4 py-2 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono uppercase tracking-wider"
+              className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm"
             >
-              [ + CREATE PROJECT ]
+              + Create Project
             </button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project, idx) => (
+            {projects.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}`}
-                className="block border border-[#E0E0E0] bg-white hover:border-[#111111] transition-all p-6 flex flex-col justify-between group"
+                className="bg-white border border-[#e6e4dc] hover:border-[#141413] rounded-xl transition-all p-6 flex flex-col justify-between group shadow-sm hover:shadow"
               >
                 <div>
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="font-mono text-xs text-[#707070]">
-                      #{String(idx + 1).padStart(2, "0")}
-                    </span>
-                    <span className="font-mono text-[10px] text-[#707070] uppercase">
-                      ID: {project.id.slice(0, 8)}
-                    </span>
-                  </div>
-
-                  <h2 className="text-base font-bold text-[#111111] group-hover:text-[#D0021B] transition-colors line-clamp-2">
+                  <h2 className="text-base font-semibold text-[#141413] group-hover:underline line-clamp-2">
                     {project.name}
                   </h2>
 
-                  <p className="text-xs text-[#707070] mt-2 line-clamp-3 leading-relaxed">
+                  <p className="text-xs text-[#6e6d68] mt-2 line-clamp-3 leading-relaxed">
                     {project.description || "No description provided."}
                   </p>
                 </div>
 
-                <div className="mt-6 pt-4 border-t border-[#E0E0E0] flex justify-between items-center font-mono text-[11px] text-[#707070]">
-                  <span>CREATED: {new Date(project.created_at).toLocaleDateString()}</span>
-                  <span className="text-[#111111] group-hover:underline">
-                    OPEN WORKSPACE →
+                <div className="mt-6 pt-4 border-t border-[#e6e4dc] flex justify-between items-center text-xs text-[#8c8b85]">
+                  <span>{new Date(project.created_at).toLocaleDateString()}</span>
+                  <span className="text-[#141413] font-medium group-hover:underline">
+                    View Project →
                   </span>
                 </div>
               </Link>

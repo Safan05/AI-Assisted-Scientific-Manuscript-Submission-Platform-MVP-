@@ -7,14 +7,14 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth";
 
 interface NavItem {
-  code: string;
   label: string;
   href: string;
+  iconLetter: string;
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { code: "01", label: "OVERVIEW", href: "/dashboard" },
-  { code: "02", label: "PROJECTS", href: "/projects" },
+  { label: "Overview", href: "/dashboard", iconLetter: "O" },
+  { label: "Projects", href: "/projects", iconLetter: "P" },
 ];
 
 export default function DashboardLayout({
@@ -34,8 +34,8 @@ export default function DashboardLayout({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center font-mono text-xs text-[#707070]">
-        [ 00 · INITIALIZING SYSTEM... ]
+      <div className="min-h-screen bg-[#faf9f5] flex items-center justify-center text-xs text-[#6e6d68]">
+        Loading your workspace...
       </div>
     );
   }
@@ -45,24 +45,31 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] flex text-[#111111]">
+    <div className="min-h-screen bg-[#faf9f5] flex text-[#141413]">
       {/* ── Left Sidebar ──────────────────────────────────────────────── */}
-      <aside className="w-64 border-r border-[#E0E0E0] bg-[#F5F5F5] flex flex-col justify-between shrink-0">
+      <aside className="w-64 border-r border-[#e6e4dc] bg-[#f5f3ec] flex flex-col justify-between shrink-0">
         <div>
-          {/* Logo / System mark */}
-          <div className="p-6 border-b border-[#E0E0E0]">
-            <div className="font-mono text-[11px] font-bold text-[#111111] tracking-wider mb-1">
-              [ SWISS-01 · CORE ]
-            </div>
-            <div className="text-xs font-bold uppercase tracking-tight text-[#111111]">
-              Manuscript Pipeline
-            </div>
+          {/* Logo / Workspace Title */}
+          <div className="p-6 border-b border-[#e6e4dc]">
+            <Link href="/dashboard" className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-[#141413] flex items-center justify-center text-white text-xs font-bold shadow-sm">
+                M
+              </div>
+              <div>
+                <div className="text-sm font-bold tracking-tight text-[#141413]">
+                  Manuscript Studio
+                </div>
+                <div className="text-[11px] text-[#6e6d68]">
+                  Research Workspace
+                </div>
+              </div>
+            </Link>
           </div>
 
           {/* Navigation Items */}
-          <nav className="p-4 space-y-1">
-            <div className="px-3 py-2 text-[10px] font-mono uppercase tracking-widest text-[#707070]">
-              NAVIGATION
+          <nav className="p-4 space-y-1.5">
+            <div className="px-3 py-1.5 text-[11px] font-semibold tracking-wider text-[#8c8b85] uppercase">
+              Menu
             </div>
             {NAV_ITEMS.map((item) => {
               const isActive =
@@ -72,20 +79,20 @@ export default function DashboardLayout({
 
               return (
                 <Link
-                  key={item.code}
+                  key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-3 py-2.5 text-xs font-mono tracking-wider transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     isActive
-                      ? "bg-[#111111] text-[#FAFAFA] font-bold"
-                      : "text-[#111111] hover:bg-[#EBEBEB]"
+                      ? "bg-[#141413] text-white shadow-sm"
+                      : "text-[#141413] hover:bg-[#eae7de]"
                   }`}
                 >
                   <span
-                    className={
-                      isActive ? "text-[#FAFAFA]" : "text-[#707070]"
-                    }
+                    className={`w-5 h-5 rounded flex items-center justify-center text-xs ${
+                      isActive ? "bg-[#2b2a27] text-white" : "bg-[#e6e4dc] text-[#6e6d68]"
+                    }`}
                   >
-                    {item.code}
+                    {item.iconLetter}
                   </span>
                   <span>{item.label}</span>
                 </Link>
@@ -95,24 +102,24 @@ export default function DashboardLayout({
         </div>
 
         {/* User profile & session bottom section */}
-        <div className="p-4 border-t border-[#E0E0E0] space-y-3">
-          <div className="px-1">
-            <div className="text-[10px] font-mono uppercase text-[#707070] tracking-wider">
-              AUTHENTICATED USER
+        <div className="p-4 border-t border-[#e6e4dc] space-y-3">
+          <div className="px-2">
+            <div className="text-[11px] font-semibold uppercase text-[#8c8b85] tracking-wider">
+              Signed in as
             </div>
-            <div className="text-xs font-medium text-[#111111] truncate mt-0.5">
-              {user.full_name || user.email}
+            <div className="text-sm font-semibold text-[#141413] truncate mt-0.5">
+              {user.full_name || "Author"}
             </div>
-            <div className="text-[11px] font-mono text-[#707070] truncate">
+            <div className="text-xs text-[#6e6d68] truncate">
               {user.email}
             </div>
           </div>
 
           <button
             onClick={logout}
-            className="w-full text-left px-3 py-2 border border-[#E0E0E0] hover:border-[#111111] bg-white text-[11px] font-mono uppercase tracking-wider text-[#111111] hover:text-[#D0021B] transition-colors"
+            className="w-full text-left px-3 py-2 border border-[#e6e4dc] hover:border-[#141413] bg-white text-xs font-medium rounded-lg text-[#141413] hover:bg-[#faf9f5] transition-colors"
           >
-            [ LOG OUT ]
+            Sign out
           </button>
         </div>
       </aside>
@@ -120,24 +127,18 @@ export default function DashboardLayout({
       {/* ── Main Content Shell ────────────────────────────────────────── */}
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top bar header */}
-        <header className="h-14 border-b border-[#E0E0E0] bg-[#FAFAFA] flex items-center justify-between px-8 shrink-0">
-          <div className="flex items-center gap-4 text-xs font-mono text-[#707070]">
-            <span>ENV: DEVELOPMENT</span>
-            <span>·</span>
-            <span>STORAGE: LOCAL / S3</span>
-            <span>·</span>
-            <span>PARSER: DOCLING v2</span>
+        <header className="h-14 border-b border-[#e6e4dc] bg-[#faf9f5] flex items-center justify-between px-8 shrink-0">
+          <div className="flex items-center gap-3 text-xs text-[#6e6d68]">
+            <span className="font-medium text-[#141413]">Manuscript Preparation & Submission</span>
           </div>
 
-          <div className="flex items-center gap-4 text-xs font-mono">
-            <span className="text-[#111111] font-medium">
-              STATUS: ONLINE
-            </span>
+          <div className="flex items-center gap-4 text-xs text-[#6e6d68]">
+            <span>{user.email}</span>
           </div>
         </header>
 
         {/* Page Content Viewport */}
-        <main className="flex-1 overflow-auto p-8">{children}</main>
+        <main className="flex-1 overflow-auto p-8 lg:p-10">{children}</main>
       </div>
     </div>
   );

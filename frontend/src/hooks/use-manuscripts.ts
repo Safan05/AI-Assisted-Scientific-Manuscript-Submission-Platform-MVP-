@@ -1,6 +1,6 @@
 "use client";
 
-// src/hooks/use-manuscripts.ts — React Query hooks for manuscripts
+// src/hooks/use-manuscripts.ts - React Query hooks for manuscripts
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { manuscriptApi, projectApi } from "@/lib/api";

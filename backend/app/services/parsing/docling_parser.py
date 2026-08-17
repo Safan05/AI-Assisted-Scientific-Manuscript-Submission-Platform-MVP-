@@ -28,12 +28,17 @@ from dataclasses import dataclass, field
 from typing import Optional, Any
 from pathlib import Path
 
-from docling.document_converter import DocumentConverter
-from docling.datamodel.base_models import DocumentStream
+try:
+    from docling.document_converter import DocumentConverter
+    from docling.datamodel.base_models import DocumentStream
+except ImportError:
+    DocumentConverter = None
+    DocumentStream = None
 
 from app.schemas.manuscript_ir import SectionNode
 
 logger = logging.getLogger(__name__)
+
 
 
 @dataclass

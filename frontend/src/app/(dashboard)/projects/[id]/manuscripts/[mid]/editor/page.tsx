@@ -36,7 +36,6 @@ export default function ManuscriptEditorPage({
   const {
     data: ir,
     isLoading: irLoading,
-    error: irError,
   } = useQuery<ManuscriptIR>({
     queryKey: ["manuscript-ir", manuscriptId],
     queryFn: () => manuscriptApi.getIR(manuscriptId).then((r) => r.data),
@@ -62,9 +61,9 @@ export default function ManuscriptEditorPage({
     onError: (err: unknown) => {
       if (err && typeof err === "object" && "response" in err) {
         const axErr = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(axErr.response?.data?.detail || "Docling parsing failed");
+        setErrorMessage(axErr.response?.data?.detail || "Document extraction failed");
       } else {
-        setErrorMessage("Parsing failed");
+        setErrorMessage("Extraction failed");
       }
     },
   });
@@ -100,109 +99,109 @@ export default function ManuscriptEditorPage({
 
   if (isLoading) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#707070]">
-        [ LOADING CANONICAL MANUSCRIPT IR // {manuscriptId.slice(0, 8)}... ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#6e6d68]">
+        Loading manuscript editor...
       </div>
     );
   }
 
   if (!manuscript) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#D0021B]">
-        [ ERROR: MANUSCRIPT RECORD NOT FOUND ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#c93b2b]">
+        Manuscript not found or access denied.
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6">
       {/* ── Breadcrumb Bar ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between text-xs font-mono text-[#707070]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#6e6d68]">
         <div className="flex items-center gap-2">
-          <Link href="/projects" className="hover:text-[#111111] hover:underline">
-            PROJECTS
+          <Link href="/projects" className="hover:text-[#141413] hover:underline">
+            Projects
           </Link>
           <span>/</span>
           <Link
             href={`/projects/${projectId}`}
-            className="hover:text-[#111111] hover:underline uppercase truncate max-w-xs"
+            className="hover:text-[#141413] hover:underline truncate max-w-xs"
           >
             {project?.name || projectId.slice(0, 8)}
           </Link>
           <span>/</span>
-          <span className="text-[#111111] font-bold">METADATA EDITOR</span>
+          <span className="text-[#141413] font-medium">Edit Document</span>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Link
             href={`/projects/${projectId}/manuscripts/${manuscriptId}/journal`}
-            className="px-3 py-1 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-[11px] font-mono font-medium uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
           >
-            [ 04 · SELECT TARGET JOURNAL → ]
+            Choose Target Journal →
           </Link>
 
           <button
             type="button"
             onClick={() => setShowAssets(!showAssets)}
-            className="px-2.5 py-1 border border-[#E0E0E0] bg-white hover:border-[#111111] text-[#111111] text-[11px] font-mono uppercase tracking-wider"
+            className="px-3 py-1.5 border border-[#e6e4dc] bg-white hover:bg-[#f5f3ec] text-[#141413] text-xs font-medium rounded-lg"
           >
-            {showAssets ? "[ HIDE FIGURES ]" : `[ EXTRACTED FIGURES (${assets?.length || 0}) ]`}
+            {showAssets ? "Hide Figures" : `Extracted Figures (${assets?.length || 0})`}
           </button>
         </div>
       </div>
 
-
       {/* ── Manuscript Header Card ─────────────────────────────────── */}
-      <div className="border-b border-[#E0E0E0] pb-5 flex flex-col md:flex-row justify-between md:items-end gap-4">
+      <div className="border-b border-[#e6e4dc] pb-5 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-mono text-xs text-[#707070] uppercase">
-              DOCUMENT: {manuscript.original_filename}
+            <span className="text-xs text-[#6e6d68]">
+              {manuscript.original_filename}
             </span>
             <StatusBadge status={manuscript.status} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-[#111111]">
+          <h1 className="text-2xl font-bold tracking-tight text-[#141413]">
             {ir?.title || manuscript.original_filename}
           </h1>
-          <div className="flex flex-wrap gap-4 font-mono text-[11px] text-[#707070] mt-1">
-            <span>MANUSCRIPT ID: {manuscript.id}</span>
-            <span>·</span>
-            <span>TOTAL WORDS: {manuscript.word_count.toLocaleString()}</span>
-            <span>·</span>
-            <span>PARSER: DOCLING IBM RESEARCH</span>
+          <div className="flex flex-wrap gap-3 text-xs text-[#6e6d68] mt-1">
+            <span>{manuscript.word_count > 0 ? `${manuscript.word_count.toLocaleString()} words` : ""}</span>
           </div>
         </div>
       </div>
 
       {/* Success banner */}
       {saveSuccess && (
-        <div className="p-3 border border-[#111111] bg-[#111111] text-[#FAFAFA] font-mono text-xs flex justify-between items-center transition-all">
-          <span>[ STATUS UPDATED: 03 · EDITED — CANONICAL IR SAVED TO DATABASE ]</span>
-          <span className="text-[#E0E0E0] text-[11px]">READY FOR TARGET JOURNAL SELECTION</span>
+        <div className="p-3.5 bg-[#f0f7f2] border border-[#d2ead9] text-[#1b6b37] text-xs font-medium rounded-lg flex justify-between items-center transition-all">
+          <span>Metadata changes saved successfully.</span>
+          <Link
+            href={`/projects/${projectId}/manuscripts/${manuscriptId}/journal`}
+            className="underline font-semibold"
+          >
+            Proceed to Target Journal Selection →
+          </Link>
         </div>
       )}
 
       {/* Error banner */}
       {errorMessage && (
-        <div className="p-3 border border-[#D0021B] bg-[rgba(208,2,27,0.05)] text-[#D0021B] font-mono text-xs">
-          [ ERROR ] {errorMessage}
+        <div className="p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+          {errorMessage}
         </div>
       )}
 
       {/* ── Extracted Assets Drawer (Figures & Tables) ──────────────── */}
       {showAssets && (
-        <div className="border border-[#111111] bg-white p-6 transition-all space-y-4">
-          <div className="flex justify-between items-center border-b border-[#E0E0E0] pb-3">
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-              [ EXTRACTED PICTURE ITEMS & FIGURES ]
-            </span>
-            <span className="font-mono text-[11px] text-[#707070]">
-              TOTAL FIGURES: {assets?.length || 0}
+        <div className="bg-white border border-[#e6e4dc] rounded-xl p-6 transition-all space-y-4 shadow-sm">
+          <div className="flex justify-between items-center border-b border-[#e6e4dc] pb-3">
+            <h3 className="text-sm font-semibold text-[#141413]">
+              Extracted Figures ({assets?.length || 0})
+            </h3>
+            <span className="text-xs text-[#6e6d68]">
+              Embedded graphics extracted from document
             </span>
           </div>
 
           {!assets || assets.length === 0 ? (
-            <div className="p-6 text-center font-mono text-xs text-[#707070]">
+            <div className="p-6 text-center text-xs text-[#6e6d68]">
               No embedded figures extracted from this document.
             </div>
           ) : (
@@ -210,13 +209,13 @@ export default function ManuscriptEditorPage({
               {assets.map((asset) => (
                 <div
                   key={asset.id}
-                  className="border border-[#E0E0E0] bg-[#FAFAFA] p-3 space-y-2"
+                  className="border border-[#e6e4dc] bg-[#faf9f5] rounded-xl p-3 space-y-2"
                 >
-                  <div className="flex justify-between items-center font-mono text-[10px] text-[#707070]">
-                    <span>FIG #{asset.order_index}</span>
+                  <div className="flex justify-between items-center text-xs text-[#6e6d68]">
+                    <span>Figure #{asset.order_index}</span>
                     <span>{(asset.file_size_bytes / 1024).toFixed(1)} KB</span>
                   </div>
-                  <div className="h-32 bg-white border border-[#E0E0E0] flex items-center justify-center font-mono text-[10px] text-[#707070] overflow-hidden">
+                  <div className="h-32 bg-white border border-[#e6e4dc] rounded-lg flex items-center justify-center text-xs text-[#6e6d68] overflow-hidden">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={`http://localhost:8000/api/v1/storage/files/${asset.storage_key}`}
@@ -226,12 +225,12 @@ export default function ManuscriptEditorPage({
                         (e.target as HTMLElement).style.display = "none";
                       }}
                     />
-                    <span className="p-2 text-center text-[10px] text-[#707070]">
+                    <span className="p-2 text-center text-xs text-[#6e6d68]">
                       {asset.original_name}
                     </span>
                   </div>
                   {asset.caption && (
-                    <p className="text-[11px] text-[#111111] line-clamp-2">
+                    <p className="text-xs text-[#141413] line-clamp-2">
                       {asset.caption}
                     </p>
                   )}
@@ -244,27 +243,20 @@ export default function ManuscriptEditorPage({
 
       {/* ── State 1: Manuscript is in DRAFT state ────────────────────── */}
       {manuscript.status === "DRAFT" && (
-        <div className="border-2 border-dashed border-[#111111] bg-white p-12 text-center space-y-4">
-          <div className="font-mono text-xs text-[#D0021B] font-bold uppercase tracking-wider">
-            [ STATUS: 01 · DRAFT — UNPARSED DOCUMENT ]
-          </div>
-          <h2 className="text-xl font-bold text-[#111111]">
-            Document Ingestion Pending
+        <div className="border border-dashed border-[#e6e4dc] bg-white rounded-xl p-12 text-center space-y-4 shadow-sm">
+          <h2 className="text-lg font-semibold text-[#141413]">
+            Document Extraction Pending
           </h2>
-          <p className="text-xs text-[#707070] max-w-md mx-auto leading-relaxed">
-            This manuscript has been securely uploaded to storage. Run the Docling
-            parsing engine to extract heading hierarchy, citations, author blocks,
-            and structured figures into the canonical Manuscript IR schema.
+          <p className="text-xs text-[#6e6d68] max-w-md mx-auto leading-relaxed">
+            Extract headings, citations, author blocks, and embedded figures to start editing your manuscript metadata.
           </p>
 
           <button
             onClick={() => parseMutation.mutate()}
             disabled={parseMutation.isPending}
-            className="px-6 py-3 bg-[#D0021B] hover:bg-[#B00217] text-white font-mono text-xs font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+            className="px-5 py-2.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
           >
-            {parseMutation.isPending
-              ? "[ DOCLING PARSER RUNNING... ]"
-              : "[ RUN DOCLING PARSING ENGINE → ]"}
+            {parseMutation.isPending ? "Extracting Content..." : "Extract Manuscript Content →"}
           </button>
         </div>
       )}
@@ -280,15 +272,15 @@ export default function ManuscriptEditorPage({
 
       {/* State 3: Ir error or not parsed */}
       {!ir && manuscript.status !== "DRAFT" && (
-        <div className="border border-[#E0E0E0] bg-white p-8 text-center space-y-3">
-          <div className="font-mono text-xs text-[#D0021B]">
-            [ ERROR FETCHING EXTRACTED METADATA IR ]
-          </div>
+        <div className="bg-white border border-[#e6e4dc] rounded-xl p-8 text-center space-y-3 shadow-sm">
+          <p className="text-xs text-[#c93b2b]">
+            Unable to load manuscript data.
+          </p>
           <button
             onClick={() => parseMutation.mutate()}
-            className="px-4 py-2 bg-[#111111] text-white font-mono text-xs uppercase"
+            className="px-4 py-2 bg-[#141413] text-white text-xs font-medium rounded-lg"
           >
-            [ RE-RUN DOCLING PARSER ]
+            Retry Content Extraction
           </button>
         </div>
       )}

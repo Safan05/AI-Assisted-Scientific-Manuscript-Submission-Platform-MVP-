@@ -1,6 +1,6 @@
 "use client";
 
-// src/components/providers.tsx — Wraps app with QueryClient + AuthProvider
+// src/components/providers.tsx - Wraps app with QueryClient + AuthProvider
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/hooks/use-auth";

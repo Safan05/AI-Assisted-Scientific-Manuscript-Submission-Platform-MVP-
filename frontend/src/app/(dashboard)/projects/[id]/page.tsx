@@ -50,64 +50,61 @@ export default function ProjectDetailPage({
 
   if (isLoading && !project) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#707070]">
-        [ LOADING WORKSPACE // ID: {projectId.slice(0, 8)}... ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#6e6d68]">
+        Loading project workspace...
       </div>
     );
   }
 
   if (!project) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#D0021B]">
-        [ ERROR: PROJECT NOT FOUND OR ACCESS DENIED ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#c93b2b]">
+        Project not found or access denied.
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* ── Breadcrumb & Navigation ─────────────────────────────────── */}
-      <div className="flex items-center gap-2 text-xs font-mono text-[#707070]">
-        <Link href="/projects" className="hover:text-[#111111] hover:underline">
-          PROJECTS
+      <div className="flex items-center gap-2 text-xs text-[#6e6d68]">
+        <Link href="/projects" className="hover:text-[#141413] hover:underline">
+          Projects
         </Link>
         <span>/</span>
-        <span className="text-[#111111] uppercase truncate max-w-sm">
+        <span className="text-[#141413] font-medium truncate max-w-sm">
           {project.name}
         </span>
       </div>
 
       {/* ── Project Header ─────────────────────────────────────────── */}
-      <div className="border-b border-[#E0E0E0] pb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+      <div className="border-b border-[#e6e4dc] pb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <div className="font-mono text-xs text-[#707070] uppercase tracking-wider mb-1">
-            WORKSPACE // {project.id.slice(0, 8)}
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#111111]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#141413]">
             {project.name}
           </h1>
-          <p className="text-xs text-[#707070] mt-1 max-w-2xl">
+          <p className="text-sm text-[#6e6d68] mt-1 max-w-2xl">
             {project.description || "No description provided for this research workspace."}
           </p>
         </div>
 
         <button
           onClick={() => setShowUpload(!showUpload)}
-          className="px-4 py-2 border border-[#111111] bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono font-medium uppercase tracking-wider transition-colors shrink-0"
+          className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0"
         >
-          {showUpload ? "[ CLOSE UPLOADER ]" : "[ + UPLOAD MANUSCRIPT ]"}
+          {showUpload ? "Close Uploader" : "+ Upload Manuscript"}
         </button>
       </div>
 
       {/* ── Ingestion Dropzone ──────────────────────────────────────── */}
       {showUpload && (
-        <div className="border border-[#111111] bg-white p-6 transition-all">
-          <div className="flex justify-between items-center mb-4 border-b border-[#E0E0E0] pb-3">
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-              [ INGEST SCIENTIFIC MANUSCRIPT ]
-            </span>
-            <span className="font-mono text-[11px] text-[#707070]">
-              MODULE 4 DOCLING PARSER
+        <div className="bg-white border border-[#e6e4dc] rounded-xl p-6 shadow-sm transition-all">
+          <div className="flex justify-between items-center mb-4 border-b border-[#e6e4dc] pb-3">
+            <h2 className="text-sm font-semibold text-[#141413]">
+              Upload Manuscript Document
+            </h2>
+            <span className="text-xs text-[#6e6d68]">
+              Word Document (.docx)
             </span>
           </div>
 
@@ -119,80 +116,77 @@ export default function ProjectDetailPage({
       )}
 
       {/* ── Manuscript List Table ───────────────────────────────────── */}
-      <div>
-        <div className="text-[11px] font-mono uppercase tracking-widest text-[#707070] mb-4">
-          MANUSCRIPTS IN THIS WORKSPACE ({manuscripts?.length || 0})
+      <div className="space-y-3">
+        <div className="text-xs font-semibold text-[#8c8b85] uppercase tracking-wider">
+          Manuscripts in this Project ({manuscripts?.length || 0})
         </div>
 
-        <div className="border border-[#E0E0E0] bg-white overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl overflow-hidden shadow-sm">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-[#F5F5F5] font-mono text-[11px] text-[#707070] uppercase">
-                <th className="py-3 px-4 font-medium">Document</th>
-                <th className="py-3 px-4 font-medium">Pipeline Status</th>
-                <th className="py-3 px-4 font-medium">Word Count</th>
-                <th className="py-3 px-4 font-medium">Target Journal</th>
-                <th className="py-3 px-4 font-medium">Ingested At</th>
-                <th className="py-3 px-4 font-medium text-right">Actions</th>
+              <tr className="border-b border-[#e6e4dc] bg-[#f5f3ec] text-xs font-medium text-[#6e6d68]">
+                <th className="py-3 px-4">Document</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Word Count</th>
+                <th className="py-3 px-4">Target Journal</th>
+                <th className="py-3 px-4">Uploaded</th>
+                <th className="py-3 px-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#e6e4dc]">
               {!manuscripts || manuscripts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="py-12 text-center">
-                    <div className="font-mono text-xs text-[#707070] uppercase mb-2">
-                      [ NO MANUSCRIPTS UPLOADED ]
-                    </div>
-                    <p className="text-xs text-[#707070] mb-4">
-                      Upload a .docx manuscript to parse hierarchy, figures, and metadata.
+                    <h2 className="text-sm font-semibold text-[#141413] mb-1">
+                      No manuscripts uploaded yet
+                    </h2>
+                    <p className="text-xs text-[#6e6d68] mb-4">
+                      Upload a Word (.docx) document to extract content, figures, and metadata.
                     </p>
                     <button
                       onClick={() => setShowUpload(true)}
-                      className="px-3 py-1.5 bg-[#111111] text-[#FAFAFA] font-mono text-xs uppercase"
+                      className="px-3.5 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm"
                     >
-                      [ UPLOAD FIRST PAPER ]
+                      + Upload First Manuscript
                     </button>
                   </td>
                 </tr>
               ) : (
                 manuscripts.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#FAFAFA] transition-colors">
+                  <tr key={m.id} className="hover:bg-[#faf9f5] transition-colors">
                     <td className="py-3.5 px-4">
-                      <div className="font-mono font-medium text-[#111111]">
+                      <div className="font-medium text-[#141413]">
                         {m.original_filename}
-                      </div>
-                      <div className="font-mono text-[10px] text-[#707070]">
-                        ID: {m.id}
                       </div>
                     </td>
                     <td className="py-3.5 px-4">
                       <StatusBadge status={m.status} />
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#707070]">
-                      {m.word_count > 0 ? `${m.word_count.toLocaleString()} words` : "—"}
+                    <td className="py-3.5 px-4 font-mono text-xs text-[#6e6d68]">
+                      {m.word_count > 0 ? `${m.word_count.toLocaleString()} words` : "-"}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#707070]">
-                      {m.target_journal_id ? "Configured" : "UNASSIGNED"}
+                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
+                      {m.target_journal_id ? "Selected" : "Not selected"}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#707070]">
-                      {new Date(m.created_at).toLocaleString()}
+                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
+                      {new Date(m.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4 text-right space-x-2">
                       {m.status === "DRAFT" && (
                         <button
                           onClick={() => parseMutation.mutate(m.id)}
                           disabled={parsingId === m.id}
-                          className="px-2.5 py-1 border border-[#D0021B] bg-white text-[#D0021B] hover:bg-[rgba(208,2,27,0.05)] text-[11px] font-mono uppercase tracking-wider transition-colors disabled:opacity-50"
+                          className="px-2.5 py-1 border border-[#141413] bg-white hover:bg-[#f5f3ec] text-[#141413] text-xs font-medium rounded-md transition-colors disabled:opacity-50"
                         >
-                          {parsingId === m.id ? "[ PARSING... ]" : "[ PARSE ]"}
+                          {parsingId === m.id ? "Extracting..." : "Extract Content"}
                         </button>
                       )}
 
                       <Link
                         href={`/projects/${projectId}/manuscripts/${m.id}/editor`}
-                        className="inline-block px-3 py-1 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-[11px] font-mono uppercase tracking-wider transition-colors"
+                        className="inline-block px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-medium rounded-lg transition-colors"
                       >
-                        [ OPEN EDITOR → ]
+                        Edit Document →
                       </Link>
                     </td>
                   </tr>

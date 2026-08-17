@@ -77,38 +77,38 @@ export function ReferenceListEditor({
       {/* ── Header ─────────────────────────────────────────────────── */}
       <div className="flex justify-between items-center">
         <div>
-          <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-            [ 04 · BIBLIOGRAPHY & CITATIONS ]
-          </span>
-          <span className="ml-3 text-xs text-[#707070]">
-            Numbered references in citation order ({references.length})
-          </span>
+          <h3 className="text-sm font-semibold text-[#141413]">
+            References & Citations ({references.length})
+          </h3>
+          <p className="text-xs text-[#6e6d68]">
+            Numbered bibliography in order of citation appearance.
+          </p>
         </div>
 
         <button
           type="button"
           onClick={handleAddReference}
-          className="px-3 py-1 bg-white border border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] text-[11px] font-mono uppercase tracking-wider transition-colors"
+          className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          + ADD REFERENCE
+          + Add Reference
         </button>
       </div>
 
       {/* ── Reference Items List ────────────────────────────────────── */}
       {references.length === 0 ? (
-        <div className="p-8 border border-dashed border-[#E0E0E0] bg-white text-center font-mono text-xs text-[#707070]">
-          [ NO CITATIONS EXTRACTED — CLICK "+ ADD REFERENCE" ]
+        <div className="p-8 border border-dashed border-[#e6e4dc] bg-white rounded-xl text-center text-xs text-[#6e6d68]">
+          No citations found. Click "+ Add Reference" to add one.
         </div>
       ) : (
-        <div className="border border-[#E0E0E0] bg-white divide-y divide-[#E0E0E0]">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl divide-y divide-[#e6e4dc] shadow-sm overflow-hidden">
           {references.map((ref, idx) => {
             const isExpanded = expandedIndex === idx;
 
             return (
-              <div key={idx} className="p-4 hover:bg-[#FAFAFA] transition-colors">
+              <div key={idx} className="p-4 hover:bg-[#faf9f5] transition-colors">
                 <div className="flex items-start justify-between gap-4">
                   {/* Reference index marker */}
-                  <div className="font-mono text-xs font-bold text-[#111111] shrink-0 pt-1">
+                  <div className="text-xs font-bold text-[#141413] shrink-0 pt-1">
                     [{ref.index}]
                   </div>
 
@@ -120,24 +120,24 @@ export function ReferenceListEditor({
                       onChange={(e) =>
                         handleUpdateReference(idx, "raw_text", e.target.value)
                       }
-                      placeholder="Paste complete raw reference string..."
-                      className="w-full p-2 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] font-sans leading-relaxed"
+                      placeholder="Full reference citation text..."
+                      className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] leading-relaxed"
                     />
 
                     {/* Metadata tags */}
-                    <div className="flex flex-wrap items-center gap-3 font-mono text-[10px] text-[#707070]">
+                    <div className="flex flex-wrap items-center gap-3 text-xs text-[#6e6d68]">
                       {ref.doi && (
-                        <span className="bg-[#F0F0F0] px-2 py-0.5 border border-[#E0E0E0] text-[#111111]">
+                        <span className="bg-[#f5f3ec] px-2 py-0.5 border border-[#e6e4dc] rounded text-[#141413] font-mono text-[11px]">
                           DOI: {ref.doi}
                         </span>
                       )}
                       {ref.year && (
-                        <span className="bg-[#F0F0F0] px-2 py-0.5 border border-[#E0E0E0] text-[#111111]">
-                          YEAR: {ref.year}
+                        <span className="bg-[#f5f3ec] px-2 py-0.5 border border-[#e6e4dc] rounded text-[#141413] text-[11px]">
+                          Year: {ref.year}
                         </span>
                       )}
                       {ref.journal && (
-                        <span className="italic text-[#111111]">
+                        <span className="italic text-[#141413]">
                           {ref.journal}
                         </span>
                       )}
@@ -147,18 +147,18 @@ export function ReferenceListEditor({
                         onClick={() =>
                           setExpandedIndex(isExpanded ? null : idx)
                         }
-                        className="underline text-[#111111] hover:text-[#D0021B]"
+                        className="underline text-[#141413] hover:text-[#c93b2b]"
                       >
-                        {isExpanded ? "[ HIDE STRUCTURED FIELDS ]" : "[ EDIT STRUCTURED FIELDS ]"}
+                        {isExpanded ? "Hide Details" : "Edit Details (DOI / Title)"}
                       </button>
                     </div>
 
                     {/* Collapsible Structured Fields */}
                     {isExpanded && (
-                      <div className="mt-3 p-3 bg-[#F5F5F5] border border-[#E0E0E0] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+                      <div className="mt-3 p-3.5 bg-[#f5f3ec] border border-[#e6e4dc] rounded-lg grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
                         <div className="sm:col-span-3">
-                          <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
-                            Article / Chapter Title
+                          <label className="text-[#6e6d68] block mb-1 font-medium">
+                            Article Title
                           </label>
                           <input
                             type="text"
@@ -167,13 +167,13 @@ export function ReferenceListEditor({
                               handleUpdateReference(idx, "title", e.target.value || null)
                             }
                             placeholder="Title of referenced paper..."
-                            className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs"
+                            className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
-                            Journal / Book Name
+                          <label className="text-[#6e6d68] block mb-1 font-medium">
+                            Journal / Publisher
                           </label>
                           <input
                             type="text"
@@ -181,13 +181,13 @@ export function ReferenceListEditor({
                             onChange={(e) =>
                               handleUpdateReference(idx, "journal", e.target.value || null)
                             }
-                            placeholder="Nature Machine Intelligence"
-                            className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs"
+                            placeholder="Journal name"
+                            className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
+                          <label className="text-[#6e6d68] block mb-1 font-medium">
                             Publication Year
                           </label>
                           <input
@@ -201,13 +201,13 @@ export function ReferenceListEditor({
                               )
                             }
                             placeholder="2024"
-                            className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono"
+                            className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs font-mono"
                           />
                         </div>
 
                         <div>
-                          <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
-                            Digital Object Identifier (DOI)
+                          <label className="text-[#6e6d68] block mb-1 font-medium">
+                            DOI (Digital Object Identifier)
                           </label>
                           <input
                             type="text"
@@ -215,8 +215,8 @@ export function ReferenceListEditor({
                             onChange={(e) =>
                               handleUpdateReference(idx, "doi", e.target.value || null)
                             }
-                            placeholder="10.1038/s41586-024-..."
-                            className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono"
+                            placeholder="10.1038/..."
+                            className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs font-mono"
                           />
                         </div>
                       </div>
@@ -224,27 +224,27 @@ export function ReferenceListEditor({
                   </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col gap-1 font-mono shrink-0">
+                  <div className="flex flex-col gap-1 shrink-0 text-xs">
                     <button
                       type="button"
                       onClick={() => handleMoveReference(idx, "up")}
                       disabled={idx === 0}
-                      className="px-1.5 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#111111] disabled:opacity-30 text-[10px]"
+                      className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#141413] rounded text-[#6e6d68] disabled:opacity-30"
                     >
-                      ▲
+                      ↑
                     </button>
                     <button
                       type="button"
                       onClick={() => handleMoveReference(idx, "down")}
                       disabled={idx === references.length - 1}
-                      className="px-1.5 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#111111] disabled:opacity-30 text-[10px]"
+                      className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#141413] rounded text-[#6e6d68] disabled:opacity-30"
                     >
-                      ▼
+                      ↓
                     </button>
                     <button
                       type="button"
                       onClick={() => handleRemoveReference(idx)}
-                      className="px-1.5 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#D0021B] text-[#D0021B] text-[10px]"
+                      className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#c93b2b] text-[#c93b2b] rounded"
                     >
                       ✕
                     </button>

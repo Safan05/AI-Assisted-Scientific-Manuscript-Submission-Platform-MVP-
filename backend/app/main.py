@@ -5,15 +5,21 @@ from app.core.config import settings
 from app.db.session import async_session_maker
 from app.services.template_seeder import seed_journal_templates
 
+import asyncio
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Seed baseline journal templates on startup
-    try:
-        async with async_session_maker() as session:
-            await seed_journal_templates(session)
-    except Exception as e:
-        print(f"Startup seeding notice: {e}")
+    # Seed baseline journal templates asynchronously in background
+    async def _seed_bg():
+        try:
+            async with async_session_maker() as session:
+                await seed_journal_templates(session)
+        except Exception as e:
+            print(f"Startup seeding notice: {e}")
+
+    asyncio.create_task(_seed_bg())
     yield
+
 
 app = FastAPI(
     title="Swiss2 API",

@@ -87,22 +87,22 @@ function SectionItem({
 
   return (
     <div
-      className={`border border-[#E0E0E0] bg-white transition-all ${
+      className={`border border-[#e6e4dc] bg-white rounded-xl overflow-hidden shadow-sm transition-all ${
         depth > 0 ? "ml-4 sm:ml-6 mt-3" : "mt-4"
       }`}
     >
       {/* Section Header Row */}
-      <div className="p-3.5 bg-[#F5F5F5] border-b border-[#E0E0E0] flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-        <div className="flex items-center gap-2 flex-1 min-w-0">
+      <div className="p-3.5 bg-[#f5f3ec] border-b border-[#e6e4dc] flex flex-col sm:flex-row justify-between sm:items-center gap-3">
+        <div className="flex items-center gap-2.5 flex-1 min-w-0">
           <button
             type="button"
             onClick={() => setIsExpanded(!isExpanded)}
-            className="w-5 h-5 flex items-center justify-center font-mono text-xs text-[#707070] hover:text-[#111111] border border-[#E0E0E0] bg-white shrink-0"
+            className="w-5 h-5 flex items-center justify-center text-xs font-semibold text-[#6e6d68] hover:text-[#141413] border border-[#e6e4dc] bg-white rounded shrink-0"
           >
             {isExpanded ? "−" : "+"}
           </button>
 
-          <span className="font-mono text-xs font-bold text-[#111111] shrink-0">
+          <span className="font-semibold text-xs text-[#141413] shrink-0">
             {numbering}
           </span>
 
@@ -110,25 +110,25 @@ function SectionItem({
             type="text"
             value={section.heading}
             onChange={(e) => handleHeadingChange(e.target.value)}
-            placeholder="Section Heading (e.g. 2. Methods and Experimental Setup)"
-            className="flex-1 font-bold text-xs bg-white px-2 py-1 border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111]"
+            placeholder="Section title (e.g. Methods, Results, Discussion)"
+            className="flex-1 font-semibold text-xs bg-white px-2.5 py-1 border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413]"
           />
 
-          <span className="font-mono text-[10px] text-[#707070] shrink-0 uppercase">
-            LVL {section.level}
+          <span className="text-[11px] text-[#6e6d68] shrink-0">
+            Level {section.level}
           </span>
         </div>
 
         {/* Section Action Controls */}
-        <div className="flex items-center gap-1 font-mono text-[11px] shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0 text-xs">
           {onMoveUp && (
             <button
               type="button"
               onClick={onMoveUp}
               title="Move Up"
-              className="px-2 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#111111] text-[#707070]"
+              className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#141413] rounded text-[#6e6d68]"
             >
-              ▲
+              ↑
             </button>
           )}
           {onMoveDown && (
@@ -136,23 +136,23 @@ function SectionItem({
               type="button"
               onClick={onMoveDown}
               title="Move Down"
-              className="px-2 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#111111] text-[#707070]"
+              className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#141413] rounded text-[#6e6d68]"
             >
-              ▼
+              ↓
             </button>
           )}
           <button
             type="button"
             onClick={handleAddChild}
-            className="px-2 py-0.5 border border-[#111111] bg-white hover:bg-[#111111] hover:text-white text-[#111111] uppercase tracking-wider text-[10px]"
+            className="px-2.5 py-0.5 border border-[#e6e4dc] bg-white hover:bg-[#faf9f5] text-[#141413] rounded text-xs font-medium"
           >
-            + SUBSECTION
+            + Subsection
           </button>
           <button
             type="button"
             onClick={onDelete}
             title="Delete Section"
-            className="px-2 py-0.5 border border-[#E0E0E0] bg-white hover:border-[#D0021B] text-[#D0021B] text-[10px]"
+            className="px-2 py-0.5 border border-[#e6e4dc] bg-white hover:border-[#c93b2b] text-[#c93b2b] rounded text-xs"
           >
             ✕
           </button>
@@ -163,12 +163,12 @@ function SectionItem({
       {isExpanded && (
         <div className="p-4 space-y-4">
           <div>
-            <div className="flex justify-between items-center mb-1">
-              <label className="text-[10px] font-mono uppercase text-[#707070] tracking-wider">
-                Section Paragraphs & Markdown Tables
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="text-xs font-medium text-[#6e6d68]">
+                Section Content
               </label>
-              <span className="font-mono text-[10px] text-[#707070]">
-                {contentDraft.split(/\s+/).filter(Boolean).length} WORDS
+              <span className="text-xs text-[#6e6d68] font-mono">
+                {contentDraft.split(/\s+/).filter(Boolean).length} words
               </span>
             </div>
             <textarea
@@ -176,15 +176,15 @@ function SectionItem({
               value={contentDraft}
               onChange={(e) => setContentDraft(e.target.value)}
               onBlur={handleContentBlur}
-              placeholder="Enter or edit body paragraphs (separate paragraphs with blank lines)..."
-              className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] font-sans leading-relaxed"
+              placeholder="Enter section paragraphs (separate paragraphs with a blank line)..."
+              className="w-full p-3 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] leading-relaxed"
             />
           </div>
 
           {/* Render Recursive Subsections */}
           {section.children && section.children.length > 0 && (
-            <div className="border-t border-[#E0E0E0] pt-2">
-              <div className="text-[10px] font-mono uppercase text-[#707070] tracking-wider mb-1">
+            <div className="border-t border-[#e6e4dc] pt-3">
+              <div className="text-xs font-medium text-[#6e6d68] mb-1.5">
                 Subsections of {numbering}
               </div>
               {section.children.map((child, idx) => (
@@ -217,7 +217,7 @@ export function SectionTreeEditor({
 }: SectionTreeEditorProps) {
   const handleAddTopLevel = () => {
     const newSection: SectionNode = {
-      heading: "New Top-Level Section",
+      heading: "New Section",
       level: 1,
       content: [],
       children: [],
@@ -255,26 +255,26 @@ export function SectionTreeEditor({
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <div>
-          <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-            [ 03 · DOCUMENT SECTION HIERARCHY ]
-          </span>
-          <span className="ml-3 text-xs text-[#707070]">
-            Parsed body sections and subsections ({sections.length})
-          </span>
+          <h3 className="text-sm font-semibold text-[#141413]">
+            Document Sections ({sections.length})
+          </h3>
+          <p className="text-xs text-[#6e6d68]">
+            Edit headings, body paragraphs, and structured subsections.
+          </p>
         </div>
 
         <button
           type="button"
           onClick={handleAddTopLevel}
-          className="px-3 py-1 bg-white border border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] text-[11px] font-mono uppercase tracking-wider transition-colors"
+          className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          + ADD TOP-LEVEL SECTION
+          + Add Section
         </button>
       </div>
 
       {sections.length === 0 ? (
-        <div className="p-8 border border-dashed border-[#E0E0E0] bg-white text-center font-mono text-xs text-[#707070]">
-          [ NO SECTIONS EXTRACTED — CLICK "+ ADD TOP-LEVEL SECTION" ]
+        <div className="p-8 border border-dashed border-[#e6e4dc] bg-white rounded-xl text-center text-xs text-[#6e6d68]">
+          No sections found. Click "+ Add Section" to create one.
         </div>
       ) : (
         <div className="space-y-2">

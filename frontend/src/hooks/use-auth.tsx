@@ -1,6 +1,6 @@
 "use client";
 
-// src/hooks/use-auth.tsx — AuthProvider + useAuth hook
+// src/hooks/use-auth.tsx - AuthProvider + useAuth hook
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { AuthContext, storeToken, clearToken, getToken } from "@/lib/auth";

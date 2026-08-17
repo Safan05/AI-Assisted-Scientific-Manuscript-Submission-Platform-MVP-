@@ -7,7 +7,6 @@ import { useQuery } from "@tanstack/react-query";
 import { projectApi } from "@/lib/api";
 import StatusBadge from "@/components/manuscripts/status-badge";
 import type { Manuscript, Project, ManuscriptStatus } from "@/lib/types";
-import { STATUS_ORDER } from "@/lib/types";
 
 export default function DashboardPage() {
   // 1. Fetch user projects
@@ -62,131 +61,114 @@ export default function DashboardPage() {
   const totalProjects = (projects || []).length;
 
   return (
-    <div className="max-w-7xl mx-auto space-y-10">
+    <div className="max-w-6xl mx-auto space-y-10">
       {/* ── Page Header ─────────────────────────────────────────────── */}
-      <div className="border-b border-[#E0E0E0] pb-6 flex justify-between items-end">
+      <div className="border-b border-[#e6e4dc] pb-6 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
         <div>
-          <div className="font-mono text-xs text-[#707070] uppercase tracking-wider mb-1">
-            OVERVIEW // 01
-          </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#111111]">
-            System Dashboard
+          <h1 className="text-3xl font-bold tracking-tight text-[#141413]">
+            Research Overview
           </h1>
-          <p className="text-xs text-[#707070] mt-1">
-            Aggregated metrics, active manuscript pipeline, and project workspaces.
+          <p className="text-sm text-[#6e6d68] mt-1">
+            Track your research projects, uploaded manuscripts, and submission progress.
           </p>
         </div>
 
         <Link
           href="/projects"
-          className="px-4 py-2 border border-[#111111] bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono font-medium uppercase tracking-wider transition-colors"
+          className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
         >
-          [ + NEW PROJECT ]
+          + New Project
         </Link>
       </div>
 
-      {/* ── High-Level Numeric Stats Grid ──────────────────────────── */}
-      <div>
-        <div className="text-[11px] font-mono uppercase tracking-widest text-[#707070] mb-4">
-          SYSTEM METRICS
+      {/* ── Stat Highlights ──────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+          <div className="text-xs font-medium text-[#6e6d68]">
+            Active Projects
+          </div>
+          <div className="text-2xl font-bold text-[#141413] mt-1">
+            {isLoading ? "-" : totalProjects}
+          </div>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 border-t border-l border-[#E0E0E0]">
-          {/* Total Projects */}
-          <div className="p-5 border-r border-b border-[#E0E0E0] bg-white">
-            <div className="text-[11px] font-mono text-[#707070] uppercase mb-1">
-              PROJECTS
-            </div>
-            <div className="text-3xl font-mono font-bold text-[#111111]">
-              {isLoading ? "-" : String(totalProjects).padStart(2, "0")}
-            </div>
-          </div>
 
-          {/* Total Manuscripts */}
-          <div className="p-5 border-r border-b border-[#E0E0E0] bg-white">
-            <div className="text-[11px] font-mono text-[#707070] uppercase mb-1">
-              TOTAL MSS
-            </div>
-            <div className="text-3xl font-mono font-bold text-[#111111]">
-              {isLoading ? "-" : String(totalManuscripts).padStart(2, "0")}
-            </div>
+        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+          <div className="text-xs font-medium text-[#6e6d68]">
+            Total Manuscripts
           </div>
+          <div className="text-2xl font-bold text-[#141413] mt-1">
+            {isLoading ? "-" : totalManuscripts}
+          </div>
+        </div>
 
-          {/* Status Breakdown (01 - 06) */}
-          {STATUS_ORDER.map((st) => (
-            <div
-              key={st}
-              className={`p-5 border-r border-b border-[#E0E0E0] bg-white ${
-                st === "DRAFT" && (statusCounts[st] || 0) > 0
-                  ? "bg-[rgba(208,2,27,0.02)]"
-                  : ""
-              }`}
-            >
-              <div className="text-[10px] font-mono text-[#707070] uppercase mb-1 truncate">
-                {st}
-              </div>
-              <div
-                className={`text-3xl font-mono font-bold ${
-                  (st === "DRAFT" || st === "PARSED") && (statusCounts[st] || 0) > 0
-                    ? "text-[#D0021B]"
-                    : "text-[#111111]"
-                }`}
-              >
-                {isLoading ? "-" : String(statusCounts[st] || 0).padStart(2, "0")}
-              </div>
-            </div>
-          ))}
+        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+          <div className="text-xs font-medium text-[#6e6d68]">
+            Ready to Edit
+          </div>
+          <div className="text-2xl font-bold text-[#141413] mt-1">
+            {isLoading ? "-" : statusCounts.PARSED}
+          </div>
+        </div>
+
+        <div className="p-5 bg-white border border-[#e6e4dc] rounded-xl">
+          <div className="text-xs font-medium text-[#6e6d68]">
+            Target Selected
+          </div>
+          <div className="text-2xl font-bold text-[#141413] mt-1">
+            {isLoading ? "-" : statusCounts.TARGET_SELECTED}
+          </div>
         </div>
       </div>
 
       {/* ── Active Manuscript Feed ──────────────────────────────────── */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <div className="text-[11px] font-mono uppercase tracking-widest text-[#707070]">
-            RECENT MANUSCRIPTS // INGESTION & EDITING
-          </div>
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
+          <h2 className="text-lg font-semibold text-[#141413]">
+            Recent Manuscripts
+          </h2>
           <Link
             href="/projects"
-            className="text-xs font-mono text-[#707070] hover:text-[#111111] underline"
+            className="text-xs font-medium text-[#6e6d68] hover:text-[#141413] hover:underline"
           >
-            VIEW ALL BY PROJECT →
+            View all projects →
           </Link>
         </div>
 
-        <div className="border border-[#E0E0E0] bg-white overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl overflow-hidden shadow-sm">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-[#F5F5F5] font-mono text-[11px] text-[#707070] uppercase">
-                <th className="py-3 px-4 font-medium">Original Filename</th>
-                <th className="py-3 px-4 font-medium">Project</th>
-                <th className="py-3 px-4 font-medium">Status</th>
-                <th className="py-3 px-4 font-medium">Word Count</th>
-                <th className="py-3 px-4 font-medium">Created</th>
-                <th className="py-3 px-4 font-medium text-right">Actions</th>
+              <tr className="border-b border-[#e6e4dc] bg-[#f5f3ec] text-xs font-medium text-[#6e6d68]">
+                <th className="py-3 px-4">Document</th>
+                <th className="py-3 px-4">Project</th>
+                <th className="py-3 px-4">Status</th>
+                <th className="py-3 px-4">Word Count</th>
+                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4 text-right">Action</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#e6e4dc]">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center font-mono text-[#707070]">
-                    [ QUERYING ACTIVE MANUSCRIPTS... ]
+                  <td colSpan={6} className="py-8 text-center text-xs text-[#6e6d68]">
+                    Loading manuscripts...
                   </td>
                 </tr>
               ) : !allManuscripts || allManuscripts.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center font-mono text-[#707070]">
-                    No manuscripts uploaded yet. Create a project and upload a .docx paper.
+                  <td colSpan={6} className="py-8 text-center text-xs text-[#6e6d68]">
+                    No manuscripts uploaded yet. Create a project to get started.
                   </td>
                 </tr>
               ) : (
                 allManuscripts.map((m) => (
-                  <tr key={m.id} className="hover:bg-[#FAFAFA] transition-colors">
-                    <td className="py-3.5 px-4 font-mono font-medium text-[#111111]">
+                  <tr key={m.id} className="hover:bg-[#faf9f5] transition-colors">
+                    <td className="py-3.5 px-4 font-medium text-[#141413]">
                       {m.original_filename}
                     </td>
-                    <td className="py-3.5 px-4 text-[#111111]">
+                    <td className="py-3.5 px-4 text-[#6e6d68]">
                       <Link
                         href={`/projects/${m.project_id}`}
-                        className="hover:underline text-[#707070] hover:text-[#111111]"
+                        className="hover:underline hover:text-[#141413]"
                       >
                         {m.projectName}
                       </Link>
@@ -194,18 +176,18 @@ export default function DashboardPage() {
                     <td className="py-3.5 px-4">
                       <StatusBadge status={m.status} />
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#707070]">
-                      {m.word_count > 0 ? `${m.word_count.toLocaleString()} w` : "—"}
+                    <td className="py-3.5 px-4 font-mono text-xs text-[#6e6d68]">
+                      {m.word_count > 0 ? `${m.word_count.toLocaleString()} words` : "-"}
                     </td>
-                    <td className="py-3.5 px-4 font-mono text-[#707070]">
+                    <td className="py-3.5 px-4 text-xs text-[#6e6d68]">
                       {new Date(m.created_at).toLocaleDateString()}
                     </td>
                     <td className="py-3.5 px-4 text-right">
                       <Link
                         href={`/projects/${m.project_id}/manuscripts/${m.id}/editor`}
-                        className="inline-block px-3 py-1 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-[11px] font-mono uppercase tracking-wider transition-colors"
+                        className="inline-block px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-medium rounded-lg transition-colors"
                       >
-                        [ OPEN EDITOR → ]
+                        Open Editor →
                       </Link>
                     </td>
                   </tr>

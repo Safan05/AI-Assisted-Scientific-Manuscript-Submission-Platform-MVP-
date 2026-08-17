@@ -1,7 +1,7 @@
 "use client";
 
 // src/app/(dashboard)/projects/[id]/manuscripts/[mid]/journal/page.tsx
-// Target journal selection step — transitions status EDITED -> TARGET_SELECTED
+// Target journal selection step - transitions status EDITED -> TARGET_SELECTED
 
 import React, { use, useState } from "react";
 import Link from "next/link";
@@ -40,7 +40,7 @@ export default function JournalSelectionPage({
       manuscriptApi
         .update(manuscriptId, { target_journal_id: targetJournalId })
         .then((r) => r.data),
-    onSuccess: (updatedManuscript) => {
+    onSuccess: () => {
       setErrorMessage(null);
       qc.invalidateQueries({ queryKey: ["manuscript", manuscriptId] });
       qc.invalidateQueries({ queryKey: ["project-manuscripts", projectId] });
@@ -48,9 +48,9 @@ export default function JournalSelectionPage({
     onError: (err: unknown) => {
       if (err && typeof err === "object" && "response" in err) {
         const axErr = err as { response?: { data?: { detail?: string } } };
-        setErrorMessage(axErr.response?.data?.detail || "Failed to assign target journal");
+        setErrorMessage(axErr.response?.data?.detail || "Failed to select target journal");
       } else {
-        setErrorMessage("Network error assigning target journal");
+        setErrorMessage("Network error selecting target journal");
       }
     },
   });
@@ -61,69 +61,68 @@ export default function JournalSelectionPage({
 
   if (manuscriptLoading) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#707070]">
-        [ LOADING TARGET JOURNAL WORKSPACE // {manuscriptId.slice(0, 8)}... ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#6e6d68]">
+        Loading target journal workspace...
       </div>
     );
   }
 
   if (!manuscript) {
     return (
-      <div className="max-w-7xl mx-auto p-12 text-center font-mono text-xs text-[#D0021B]">
-        [ ERROR: MANUSCRIPT NOT FOUND ]
+      <div className="max-w-6xl mx-auto p-12 text-center text-xs text-[#c93b2b]">
+        Manuscript not found or access denied.
       </div>
     );
   }
 
   return (
-    <div className="max-w-7xl mx-auto space-y-8">
+    <div className="max-w-6xl mx-auto space-y-8">
       {/* ── Breadcrumb Bar ─────────────────────────────────────────── */}
-      <div className="flex items-center justify-between text-xs font-mono text-[#707070]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs text-[#6e6d68]">
         <div className="flex items-center gap-2">
-          <Link href="/projects" className="hover:text-[#111111] hover:underline">
-            PROJECTS
+          <Link href="/projects" className="hover:text-[#141413] hover:underline">
+            Projects
           </Link>
           <span>/</span>
           <Link
             href={`/projects/${projectId}`}
-            className="hover:text-[#111111] hover:underline uppercase truncate max-w-xs"
+            className="hover:text-[#141413] hover:underline truncate max-w-xs"
           >
             {project?.name || projectId.slice(0, 8)}
           </Link>
           <span>/</span>
           <Link
             href={`/projects/${projectId}/manuscripts/${manuscriptId}/editor`}
-            className="hover:text-[#111111] hover:underline"
+            className="hover:text-[#141413] hover:underline"
           >
-            METADATA
+            Edit Document
           </Link>
           <span>/</span>
-          <span className="text-[#111111] font-bold">TARGET JOURNAL</span>
+          <span className="text-[#141413] font-medium">Target Journal</span>
         </div>
 
         <Link
           href={`/projects/${projectId}/manuscripts/${manuscriptId}/editor`}
-          className="underline text-[#111111] hover:text-[#D0021B]"
+          className="hover:underline text-[#141413]"
         >
-          ← BACK TO METADATA EDITOR
+          ← Return to Editor
         </Link>
       </div>
 
       {/* ── Page Header ─────────────────────────────────────────────── */}
-      <div className="border-b border-[#E0E0E0] pb-6 flex flex-col md:flex-row justify-between md:items-end gap-4">
+      <div className="border-b border-[#e6e4dc] pb-6 flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1">
-            <span className="font-mono text-xs text-[#707070] uppercase">
-              PIPELINE STEP 04 // TARGET JOURNAL STANDARDIZATION
+            <span className="text-xs text-[#6e6d68]">
+              Target Journal Selection
             </span>
             <StatusBadge status={manuscript.status} />
           </div>
-          <h1 className="text-3xl font-bold tracking-tight text-[#111111]">
+          <h1 className="text-3xl font-bold tracking-tight text-[#141413]">
             Select Target Journal
           </h1>
-          <p className="text-xs text-[#707070] mt-1 max-w-2xl leading-relaxed">
-            Choose the destination journal for automated pre-flight compliance checking
-            and target Word document (.docx) generation.
+          <p className="text-sm text-[#6e6d68] mt-1 max-w-2xl leading-relaxed">
+            Choose your target journal to check formatting compliance, word limits, mandatory disclosures, and prepare output document generation.
           </p>
         </div>
 
@@ -134,17 +133,17 @@ export default function JournalSelectionPage({
                 `/projects/${projectId}/manuscripts/${manuscriptId}/editor`
               )
             }
-            className="px-4 py-2 border border-[#111111] bg-white hover:bg-[#111111] hover:text-white text-[#111111] text-xs font-mono font-medium uppercase tracking-wider transition-colors shrink-0"
+            className="px-4 py-2 bg-white border border-[#e6e4dc] hover:border-[#141413] text-[#141413] text-xs font-semibold rounded-lg shadow-sm transition-colors shrink-0"
           >
-            [ RETURN TO EDITOR → ]
+            Return to Editor →
           </button>
         )}
       </div>
 
       {/* Error display */}
       {errorMessage && (
-        <div className="p-3 border border-[#D0021B] bg-[rgba(208,2,27,0.05)] text-[#D0021B] text-xs font-mono">
-          [ ERROR ] {errorMessage}
+        <div className="p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+          {errorMessage}
         </div>
       )}
 

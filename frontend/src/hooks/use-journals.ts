@@ -1,6 +1,6 @@
 "use client";
 
-// src/hooks/use-journals.ts — React Query hooks for Journal Templates and Rules
+// src/hooks/use-journals.ts - React Query hooks for Journal Templates and Rules
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { journalApi, manuscriptApi } from "@/lib/api";

@@ -50,7 +50,7 @@ export function UploadDropzone({
 
   const processFile = async (file: File) => {
     if (!file.name.endsWith(".docx")) {
-      setError("Invalid file format. Only Microsoft Word (.docx) documents are supported.");
+      setError("Please select a Microsoft Word (.docx) document.");
       return;
     }
 
@@ -64,7 +64,7 @@ export function UploadDropzone({
       setUploadedManuscript(manuscript);
       setIsUploading(false);
 
-      // 2. Trigger Docling Parser (Module 4) automatically
+      // 2. Trigger Parser automatically
       setIsParsing(true);
       try {
         await manuscriptApi.parse(manuscript.id);
@@ -73,7 +73,6 @@ export function UploadDropzone({
         onManuscriptUploaded(updatedRes.data);
       } catch (parseErr: unknown) {
         console.error("Auto-parse notice:", parseErr);
-        // Even if parse fails, the manuscript is uploaded
         onManuscriptUploaded(manuscript);
       } finally {
         setIsParsing(false);
@@ -83,7 +82,7 @@ export function UploadDropzone({
       setIsParsing(false);
       if (err && typeof err === "object" && "response" in err) {
         const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Upload failed. Check server connection.");
+        setError(axErr.response?.data?.detail || "Upload failed. Please try again.");
       } else {
         setError("Network error during manuscript upload.");
       }
@@ -101,9 +100,9 @@ export function UploadDropzone({
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Docling parser failed.");
+        setError(axErr.response?.data?.detail || "Document extraction failed.");
       } else {
-        setError("Parsing failed.");
+        setError("Extraction failed. Please try again.");
       }
     } finally {
       setIsParsing(false);
@@ -114,8 +113,8 @@ export function UploadDropzone({
     <div className="space-y-4">
       {/* Error alert */}
       {error && (
-        <div className="p-3 border border-[#D0021B] bg-[rgba(208,2,27,0.05)] text-[#D0021B] text-xs font-mono">
-          [ ERROR ] {error}
+        <div className="p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+          {error}
         </div>
       )}
 
@@ -127,9 +126,9 @@ export function UploadDropzone({
         onClick={() => fileInputRef.current?.click()}
         className={`border-2 ${
           isDragging
-            ? "border-[#111111] bg-[#F0F0F0]"
-            : "border-dashed border-[#E0E0E0] bg-white hover:border-[#707070]"
-        } p-8 text-center cursor-pointer transition-colors select-none`}
+            ? "border-[#141413] bg-[#f5f3ec]"
+            : "border-dashed border-[#e6e4dc] bg-[#faf9f5] hover:border-[#8c8b85]"
+        } p-8 text-center cursor-pointer rounded-xl transition-colors select-none`}
       >
         <input
           ref={fileInputRef}
@@ -140,38 +139,36 @@ export function UploadDropzone({
         />
 
         <div className="max-w-md mx-auto space-y-2">
-          <div className="font-mono text-xs font-bold text-[#111111] tracking-wider uppercase">
+          <div className="w-10 h-10 mx-auto rounded-full bg-[#f3f1ea] flex items-center justify-center text-[#141413] mb-2">
+            📄
+          </div>
+
+          <div className="text-sm font-semibold text-[#141413]">
             {isUploading
-              ? "[ UPLOADING .DOCX TO OBJECT STORAGE... ]"
+              ? "Uploading document..."
               : isParsing
-              ? "[ DOCLING PARSING ENGINE RUNNING... ]"
-              : "[ DRAG & DROP .DOCX OR CLICK TO BROWSE ]"}
+              ? "Extracting sections and figures..."
+              : "Drag and drop your Word document here, or browse"}
           </div>
 
-          <p className="text-xs text-[#707070]">
-            Accepted format: Microsoft Word (.docx). Ingests document hierarchy,
-            embedded figures, tables, and reference lists.
+          <p className="text-xs text-[#6e6d68]">
+            Supported format: Microsoft Word (.docx). Sections, tables, figures, and references will be automatically extracted.
           </p>
-
-          <div className="pt-2 font-mono text-[10px] text-[#707070] uppercase tracking-wider">
-            IBM RESEARCH DOCLING v2 · TABLEFORMER · CPU-ONLY INGESTION
-          </div>
         </div>
       </div>
 
       {/* Uploaded state indicator */}
       {uploadedManuscript && (
-        <div className="border border-[#E0E0E0] bg-white p-4 flex justify-between items-center text-xs">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl p-4 flex justify-between items-center text-sm shadow-sm">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="font-mono font-bold text-[#111111]">
+              <span className="font-medium text-[#141413]">
                 {uploadedManuscript.original_filename}
               </span>
               <StatusBadge status={uploadedManuscript.status} />
             </div>
-            <div className="font-mono text-[11px] text-[#707070]">
-              ID: {uploadedManuscript.id} · WORDS:{" "}
-              {uploadedManuscript.word_count.toLocaleString()}
+            <div className="text-xs text-[#6e6d68]">
+              {uploadedManuscript.word_count > 0 ? `${uploadedManuscript.word_count.toLocaleString()} words extracted` : "Ready for extraction"}
             </div>
           </div>
 
@@ -182,9 +179,9 @@ export function UploadDropzone({
                 triggerManualParse(uploadedManuscript.id);
               }}
               disabled={isParsing}
-              className="px-3 py-1.5 bg-[#D0021B] hover:bg-[#B00217] text-white font-mono text-xs uppercase tracking-wider disabled:opacity-50"
+              className="px-3.5 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg transition-colors disabled:opacity-50"
             >
-              {isParsing ? "[ PARSING... ]" : "[ PARSE WITH DOCLING → ]"}
+              {isParsing ? "Extracting..." : "Extract Content →"}
             </button>
           )}
         </div>

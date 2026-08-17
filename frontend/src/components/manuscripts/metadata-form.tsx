@@ -68,9 +68,7 @@ export function MetadataForm({
 
   const totalWordCount = useMemo(() => {
     let count = 0;
-    // Abstract
     count += abstractWords;
-    // Sections recursive
     function countSections(nodes: SectionNode[]) {
       for (const node of nodes) {
         for (const p of node.content) {
@@ -142,19 +140,19 @@ export function MetadataForm({
   };
 
   const tabs: { id: TabType; label: string; count?: number }[] = [
-    { id: "general", label: "01 · GENERAL" },
-    { id: "authors", label: "02 · AUTHORS & AFFILIATIONS", count: authors.length },
-    { id: "sections", label: "03 · SECTIONS", count: sections.length },
-    { id: "references", label: "04 · CITATIONS", count: references.length },
-    { id: "statements", label: "05 · STATEMENTS & FUNDING" },
+    { id: "general", label: "Overview & Abstract" },
+    { id: "authors", label: "Authors", count: authors.length },
+    { id: "sections", label: "Sections", count: sections.length },
+    { id: "references", label: "References", count: references.length },
+    { id: "statements", label: "Disclosures & Grants" },
   ];
 
   return (
     <form onSubmit={handleSave} className="space-y-6">
       {/* ── Editor Toolbar & Global Save CTA ─────────────────────────── */}
-      <div className="sticky top-0 z-10 bg-[#FAFAFA] border-b border-[#E0E0E0] py-3 flex flex-wrap justify-between items-center gap-4">
+      <div className="sticky top-0 z-10 bg-[#faf9f5]/95 backdrop-blur border-b border-[#e6e4dc] py-3 flex flex-wrap justify-between items-center gap-4">
         {/* Navigation Tabs */}
-        <div className="flex flex-wrap gap-1">
+        <div className="flex flex-wrap gap-1 bg-[#f5f3ec] p-1 rounded-xl border border-[#e6e4dc]">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
@@ -162,20 +160,20 @@ export function MetadataForm({
                 key={tab.id}
                 type="button"
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-3 py-2 text-xs font-mono tracking-wider transition-colors ${
+                className={`px-3.5 py-1.5 text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 ${
                   isActive
-                    ? "bg-[#111111] text-[#FAFAFA] font-bold"
-                    : "bg-white border border-[#E0E0E0] text-[#707070] hover:text-[#111111] hover:border-[#111111]"
+                    ? "bg-white text-[#141413] shadow-sm font-semibold"
+                    : "text-[#6e6d68] hover:text-[#141413]"
                 }`}
               >
-                {tab.label}
+                <span>{tab.label}</span>
                 {tab.count !== undefined && (
                   <span
-                    className={`ml-2 text-[10px] ${
-                      isActive ? "text-[#E0E0E0]" : "text-[#707070]"
+                    className={`text-[11px] px-1.5 py-0.2 rounded-full ${
+                      isActive ? "bg-[#f5f3ec] text-[#141413]" : "text-[#8c8b85]"
                     }`}
                   >
-                    [{tab.count}]
+                    {tab.count}
                   </span>
                 )}
               </button>
@@ -185,30 +183,28 @@ export function MetadataForm({
 
         {/* Live Word Count & Primary Save CTA */}
         <div className="flex items-center gap-4">
-          <div className="font-mono text-xs text-[#707070]">
-            LIVE TOTAL:{" "}
-            <span className="font-bold text-[#111111]">
+          <div className="text-xs text-[#6e6d68]">
+            Total word count:{" "}
+            <span className="font-semibold text-[#141413]">
               {totalWordCount.toLocaleString()}
-            </span>{" "}
-            WORDS
+            </span>
           </div>
 
-          {/* THE SIGNATURE SIGNAL RED PRIMARY BUTTON */}
           <button
             type="submit"
             disabled={isSaving}
-            className="px-5 py-2 bg-[#D0021B] hover:bg-[#B00217] text-white text-xs font-mono font-bold uppercase tracking-wider transition-colors disabled:opacity-50"
+            className="px-4 py-2 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors disabled:opacity-50"
           >
-            {isSaving ? "[ SAVING CHANGES... ]" : "[ SAVE & COMMIT IR → ]"}
+            {isSaving ? "Saving..." : "Save Changes"}
           </button>
         </div>
       </div>
 
       {/* ── Tab 01: General ─────────────────────────────────────────── */}
       {activeTab === "general" && (
-        <div className="space-y-6 bg-white border border-[#E0E0E0] p-6">
+        <div className="space-y-6 bg-white border border-[#e6e4dc] rounded-xl p-6 shadow-sm">
           <div>
-            <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-2">
+            <label className="block text-xs font-medium text-[#141413] mb-1.5">
               Manuscript Title *
             </label>
             <input
@@ -217,17 +213,17 @@ export function MetadataForm({
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="e.g. End-to-End Convolutional Transformers for High-Resolution Medical Image Synthesis"
-              className="w-full px-3 py-2.5 text-base font-bold bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111]"
+              className="w-full px-3.5 py-2.5 text-base font-semibold bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413]"
             />
           </div>
 
           <div>
-            <div className="flex justify-between items-center mb-2">
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070]">
+            <div className="flex justify-between items-center mb-1.5">
+              <label className="block text-xs font-medium text-[#141413]">
                 Abstract *
               </label>
-              <span className="font-mono text-[11px] text-[#707070]">
-                {abstractWords} WORDS
+              <span className="text-xs text-[#6e6d68] font-mono">
+                {abstractWords} words
               </span>
             </div>
             <textarea
@@ -235,26 +231,26 @@ export function MetadataForm({
               required
               value={abstract}
               onChange={(e) => setAbstract(e.target.value)}
-              placeholder="Enter comprehensive manuscript abstract..."
-              className="w-full p-3 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] font-sans leading-relaxed"
+              placeholder="Enter manuscript abstract..."
+              className="w-full p-3.5 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] leading-relaxed"
             />
           </div>
 
           <div>
-            <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-2">
-              Keywords (Press Enter or Comma to Add)
+            <label className="block text-xs font-medium text-[#141413] mb-1.5">
+              Keywords (Press Enter or comma to add)
             </label>
             <div className="flex flex-wrap gap-2 mb-2">
               {keywords.map((kw, idx) => (
                 <span
                   key={idx}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#F5F5F5] border border-[#E0E0E0] text-xs font-mono text-[#111111]"
+                  className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#f5f3ec] border border-[#e6e4dc] rounded-lg text-xs text-[#141413]"
                 >
                   {kw}
                   <button
                     type="button"
                     onClick={() => handleRemoveKeyword(idx)}
-                    className="text-[#707070] hover:text-[#D0021B]"
+                    className="text-[#8c8b85] hover:text-[#c93b2b]"
                   >
                     ×
                   </button>
@@ -267,7 +263,7 @@ export function MetadataForm({
               onChange={(e) => setKeywordInput(e.target.value)}
               onKeyDown={handleAddKeyword}
               placeholder="Type keyword and press Enter..."
-              className="w-full px-3 py-2 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111]"
+              className="w-full px-3.5 py-2 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413]"
             />
           </div>
         </div>
@@ -305,33 +301,38 @@ export function MetadataForm({
       {activeTab === "statements" && (
         <div className="space-y-6">
           {/* Funding sources */}
-          <div className="bg-white border border-[#E0E0E0] p-6 space-y-4">
+          <div className="bg-white border border-[#e6e4dc] rounded-xl p-6 space-y-4 shadow-sm">
             <div className="flex justify-between items-center">
-              <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-                [ FUNDING SOURCES & GRANTS ]
-              </span>
+              <div>
+                <h3 className="text-sm font-semibold text-[#141413]">
+                  Funding Sources & Grants
+                </h3>
+                <p className="text-xs text-[#6e6d68]">
+                  Grants, fellowships, or institutional awards supporting this research.
+                </p>
+              </div>
               <button
                 type="button"
                 onClick={handleAddFunding}
-                className="px-3 py-1 bg-white border border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] text-[11px] font-mono uppercase tracking-wider"
+                className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
               >
-                + ADD FUNDER
+                + Add Grant
               </button>
             </div>
 
             {funding.length === 0 ? (
-              <div className="p-4 border border-dashed border-[#E0E0E0] text-center font-mono text-xs text-[#707070]">
+              <div className="p-6 border border-dashed border-[#e6e4dc] rounded-lg text-center text-xs text-[#6e6d68]">
                 No specific grants or funding listed.
               </div>
             ) : (
               funding.map((item, idx) => (
                 <div
                   key={idx}
-                  className="p-3 bg-[#FAFAFA] border border-[#E0E0E0] grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
+                  className="p-3.5 bg-[#faf9f5] border border-[#e6e4dc] rounded-lg grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs"
                 >
                   <div>
-                    <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
-                      Funder / Agency Name
+                    <label className="text-[#6e6d68] block mb-1 font-medium">
+                      Funding Agency
                     </label>
                     <input
                       type="text"
@@ -339,13 +340,13 @@ export function MetadataForm({
                       onChange={(e) =>
                         handleUpdateFunding(idx, "funder", e.target.value)
                       }
-                      placeholder="National Institutes of Health (NIH)"
-                      className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px]"
+                      placeholder="e.g. National Science Foundation"
+                      className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
-                      Grant / Contract Number
+                    <label className="text-[#6e6d68] block mb-1 font-medium">
+                      Grant Number
                     </label>
                     <input
                       type="text"
@@ -353,13 +354,13 @@ export function MetadataForm({
                       onChange={(e) =>
                         handleUpdateFunding(idx, "grant_number", e.target.value || null)
                       }
-                      placeholder="R01-EB029384"
-                      className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] font-mono"
+                      placeholder="e.g. NSF-2049182"
+                      className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg font-mono"
                     />
                   </div>
                   <div className="flex items-end justify-between gap-2">
                     <div className="flex-1">
-                      <label className="text-[10px] font-mono text-[#707070] uppercase block mb-1">
+                      <label className="text-[#6e6d68] block mb-1 font-medium">
                         Recipient Author
                       </label>
                       <input
@@ -368,14 +369,15 @@ export function MetadataForm({
                         onChange={(e) =>
                           handleUpdateFunding(idx, "recipient", e.target.value || null)
                         }
-                        placeholder="J. Doe"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px]"
+                        placeholder="Author name"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg"
                       />
                     </div>
                     <button
                       type="button"
                       onClick={() => handleRemoveFunding(idx)}
-                      className="px-2 py-1 border border-[#E0E0E0] hover:border-[#D0021B] text-[#D0021B] font-mono text-[10px]"
+                      className="px-2 py-1 border border-[#e6e4dc] hover:border-[#c93b2b] text-[#c93b2b] rounded"
+                      title="Remove"
                     >
                       ✕
                     </button>
@@ -386,73 +388,78 @@ export function MetadataForm({
           </div>
 
           {/* Compliance statements */}
-          <div className="bg-white border border-[#E0E0E0] p-6 space-y-4">
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider block">
-              [ COMPLIANCE & ETHICAL STATEMENTS ]
-            </span>
+          <div className="bg-white border border-[#e6e4dc] rounded-xl p-6 space-y-4 shadow-sm">
+            <div>
+              <h3 className="text-sm font-semibold text-[#141413]">
+                Disclosures & Statements
+              </h3>
+              <p className="text-xs text-[#6e6d68]">
+                Required journal disclosure statements for peer review.
+              </p>
+            </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-1">
-                Conflict of Interest Statement
+              <label className="block text-xs font-medium text-[#141413] mb-1">
+                Competing Interests / Conflict of Interest
               </label>
               <textarea
                 rows={2}
                 value={coi}
                 onChange={(e) => setCoi(e.target.value)}
-                placeholder="The authors declare no competing financial or non-financial interests..."
-                className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111]"
+                placeholder="The authors declare that they have no known competing financial interests..."
+                className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-1">
-                Ethics & Institutional Review Board (IRB) Statement
+              <label className="block text-xs font-medium text-[#141413] mb-1">
+                Ethics & Institutional Review Board (IRB) Approval
               </label>
               <textarea
                 rows={2}
                 value={ethics}
                 onChange={(e) => setEthics(e.target.value)}
-                placeholder="This study was approved by the Institutional Review Board under protocol #..."
-                className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111]"
+                placeholder="All procedures were approved by the Institutional Ethics Committee under protocol #..."
+                className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-1">
+              <label className="block text-xs font-medium text-[#141413] mb-1">
                 Data & Code Availability
               </label>
               <textarea
                 rows={2}
                 value={dataAvail}
                 onChange={(e) => setDataAvail(e.target.value)}
-                placeholder="The dataset and code generated during the current study are available on GitHub / Zenodo..."
-                className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111]"
+                placeholder="The datasets generated and analyzed during the current study are available in the public repository..."
+                className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-1">
-                Author Contributions (CRediT)
+              <label className="block text-xs font-medium text-[#141413] mb-1">
+                Author Contributions
               </label>
               <textarea
                 rows={2}
                 value={authorContrib}
                 onChange={(e) => setAuthorContrib(e.target.value)}
-                placeholder="Conceptualization: J.D., M.S.; Methodology: J.D.; Writing: all authors..."
-                className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111]"
+                placeholder="Conceptualization: J.D., M.S.; Methodology: J.D.; Writing and editing: all authors."
+                className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413]"
               />
             </div>
 
             <div>
-              <label className="block text-[11px] font-mono font-semibold uppercase tracking-wider text-[#707070] mb-1">
+              <label className="block text-xs font-medium text-[#141413] mb-1">
                 Acknowledgements
               </label>
               <textarea
                 rows={2}
                 value={acknowledgements}
                 onChange={(e) => setAcknowledgements(e.target.value)}
-                placeholder="We thank the supercomputing cluster facility for compute allocation..."
-                className="w-full p-2.5 text-xs bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111]"
+                placeholder="The authors acknowledge the high-performance computing cluster facility for computational resources..."
+                className="w-full p-2.5 text-xs bg-white border border-[#e6e4dc] rounded-lg text-[#141413]"
               />
             </div>
           </div>

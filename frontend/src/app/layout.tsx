@@ -32,7 +32,7 @@ export default function RootLayout({
       lang="en"
       className={`${inter.variable} ${jetbrainsMono.variable} h-full`}
     >
-      <body className="min-h-full flex flex-col bg-[#FAFAFA] text-[#111111]">
+      <body className="min-h-full flex flex-col bg-[#faf9f5] text-[#141413]">
         <Providers>{children}</Providers>
       </body>
     </html>

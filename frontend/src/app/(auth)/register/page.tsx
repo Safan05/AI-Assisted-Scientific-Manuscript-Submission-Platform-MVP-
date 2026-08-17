@@ -35,9 +35,9 @@ export default function RegisterPage() {
     } catch (err: unknown) {
       if (err && typeof err === "object" && "response" in err) {
         const axErr = err as { response?: { data?: { detail?: string } } };
-        setError(axErr.response?.data?.detail || "Registration failed. Please check inputs.");
+        setError(axErr.response?.data?.detail || "Registration failed. Please check your details.");
       } else {
-        setError("Network error or server unreachable.");
+        setError("Unable to connect to the server. Please try again.");
       }
     } finally {
       setIsLoading(false);
@@ -45,59 +45,56 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="border border-[#E0E0E0] bg-[#FAFAFA] p-8 sm:p-10">
-      {/* Title block */}
-      <div className="mb-8 border-b border-[#E0E0E0] pb-6">
-        <div className="font-mono text-xs text-[#707070] uppercase tracking-wider mb-1">
-          AUTH // 02
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight text-[#111111]">
-          Register
+    <div className="bg-white border border-[#e6e4dc] rounded-xl p-8 sm:p-10 shadow-sm">
+      {/* Title */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold tracking-tight text-[#141413]">
+          Create your account
         </h1>
-        <p className="text-xs text-[#707070] mt-1">
-          Create a workspace to submit and standardize manuscripts.
+        <p className="text-sm text-[#6e6d68] mt-1">
+          Prepare, standardize, and submit scientific manuscripts with ease.
         </p>
       </div>
 
-      {/* Error display */}
+      {/* Error alert */}
       {error && (
-        <div className="mb-6 p-3 border border-[#D0021B] bg-[rgba(208,2,27,0.05)] text-[#D0021B] text-xs font-mono">
-          [ ERROR ] {error}
+        <div className="mb-5 p-3.5 border border-[#f5c6cb] bg-[#fdf2f2] text-[#c93b2b] text-xs rounded-lg">
+          {error}
         </div>
       )}
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-2 font-mono">
-            Full Name / Academic Title
+          <label className="block text-xs font-medium text-[#141413] mb-1.5">
+            Full name
           </label>
           <input
             type="text"
             value={fullName}
             onChange={(e) => setFullName(e.target.value)}
-            placeholder="Dr. Jane Doe"
-            className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none transition-colors"
+            placeholder="Dr. Eleanor Vance"
+            className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-2 font-mono">
-            Institutional Email
+          <label className="block text-xs font-medium text-[#141413] mb-1.5">
+            Email address
           </label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="j.doe@institution.edu"
-            className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none transition-colors"
+            placeholder="e.vance@university.edu"
+            className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-2 font-mono">
-            Password (min 8 chars)
+          <label className="block text-xs font-medium text-[#141413] mb-1.5">
+            Password (min. 8 characters)
           </label>
           <input
             type="password"
@@ -105,13 +102,13 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="••••••••••••"
-            className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none transition-colors"
+            className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
           />
         </div>
 
         <div>
-          <label className="block text-[11px] font-semibold uppercase tracking-wider text-[#707070] mb-2 font-mono">
-            Confirm Password
+          <label className="block text-xs font-medium text-[#141413] mb-1.5">
+            Confirm password
           </label>
           <input
             type="password"
@@ -119,25 +116,25 @@ export default function RegisterPage() {
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             placeholder="••••••••••••"
-            className="w-full px-3 py-2 text-sm bg-white border border-[#E0E0E0] rounded-[2px] text-[#111111] focus:border-[#111111] focus:outline-none transition-colors"
+            className="w-full px-3.5 py-2.5 text-sm bg-white border border-[#e6e4dc] rounded-lg text-[#141413] focus:border-[#141413] focus:ring-1 focus:ring-[#141413] transition-all"
           />
         </div>
 
         <button
           type="submit"
           disabled={isLoading}
-          className="w-full py-2.5 px-4 bg-[#111111] hover:bg-[#222222] text-[#FAFAFA] text-xs font-mono font-medium uppercase tracking-wider transition-colors disabled:opacity-50 mt-6"
+          className="w-full py-2.5 px-4 bg-[#141413] hover:bg-[#2b2a27] text-white text-sm font-medium rounded-lg transition-colors disabled:opacity-50 mt-6"
         >
-          {isLoading ? "[ CREATING ACCOUNT... ]" : "[ CREATE ACCOUNT → ]"}
+          {isLoading ? "Creating account..." : "Create account"}
         </button>
       </form>
 
-      {/* Secondary links */}
-      <div className="mt-8 pt-6 border-t border-[#E0E0E0] flex justify-between items-center text-xs">
-        <span className="text-[#707070]">Already registered?</span>
+      {/* Sign in link */}
+      <div className="mt-6 pt-5 border-t border-[#e6e4dc] flex justify-between items-center text-xs">
+        <span className="text-[#6e6d68]">Already have an account?</span>
         <Link
           href="/login"
-          className="font-medium text-[#111111] underline hover:text-[#D0021B] transition-colors"
+          className="font-semibold text-[#141413] hover:underline"
         >
           Sign in
         </Link>

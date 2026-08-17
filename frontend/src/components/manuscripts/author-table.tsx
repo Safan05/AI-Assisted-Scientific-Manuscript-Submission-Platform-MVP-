@@ -41,7 +41,6 @@ export function AuthorTable({
     // If marked as corresponding, update corresponding author field
     if (field === "is_corresponding") {
       if (value === true) {
-        // Set only this author as corresponding
         updated.forEach((a, i) => {
           if (i !== index) a.is_corresponding = false;
         });
@@ -122,52 +121,52 @@ export function AuthorTable({
   return (
     <div className="space-y-8">
       {/* ── Authors Section ─────────────────────────────────────────── */}
-      <div>
-        <div className="flex justify-between items-center mb-3">
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
           <div>
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-              [ 01 · AUTHORS LIST ]
-            </span>
-            <span className="ml-3 text-xs text-[#707070]">
-              Ordered contributor sequence ({authors.length})
-            </span>
+            <h3 className="text-sm font-semibold text-[#141413]">
+              Authors & Contributors ({authors.length})
+            </h3>
+            <p className="text-xs text-[#6e6d68]">
+              Ordered sequence of authors as they will appear on the title page.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleAddAuthor}
-            className="px-3 py-1 bg-white border border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] text-[11px] font-mono uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
           >
-            + ADD AUTHOR
+            + Add Author
           </button>
         </div>
 
-        <div className="border border-[#E0E0E0] bg-white overflow-x-auto">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl overflow-x-auto shadow-sm">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-[#F5F5F5] font-mono text-[11px] text-[#707070] uppercase">
+              <tr className="border-b border-[#e6e4dc] bg-[#f5f3ec] text-[#6e6d68] font-medium">
                 <th className="py-2.5 px-3 w-10 text-center">#</th>
-                <th className="py-2.5 px-3">Given Name</th>
-                <th className="py-2.5 px-3">Surname</th>
+                <th className="py-2.5 px-3">First Name</th>
+                <th className="py-2.5 px-3">Last Name</th>
                 <th className="py-2.5 px-3">Email Address</th>
-                <th className="py-2.5 px-3">ORCID ID</th>
-                <th className="py-2.5 px-3 w-28 text-center">Affiliations</th>
+                <th className="py-2.5 px-3">ORCID</th>
+                <th className="py-2.5 px-3 w-24 text-center">Affiliation #</th>
                 <th className="py-2.5 px-3 w-28 text-center">Corresponding</th>
-                <th className="py-2.5 px-3 w-24 text-right">Order / Del</th>
+                <th className="py-2.5 px-3 w-24 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#e6e4dc]">
               {authors.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="py-6 text-center font-mono text-[#707070]">
-                    [ NO AUTHORS REGISTERED — CLICK "+ ADD AUTHOR" ]
+                  <td colSpan={8} className="py-6 text-center text-xs text-[#6e6d68]">
+                    No authors listed. Click "+ Add Author" to add one.
                   </td>
                 </tr>
               ) : (
                 authors.map((author, idx) => (
-                  <tr key={idx} className="hover:bg-[#FAFAFA]">
-                    <td className="py-2.5 px-3 font-mono text-center text-[#707070]">
-                      {String(idx + 1).padStart(2, "0")}
+                  <tr key={idx} className="hover:bg-[#faf9f5]">
+                    <td className="py-2.5 px-3 text-center text-[#6e6d68] font-medium">
+                      {idx + 1}
                     </td>
                     <td className="py-2.5 px-3">
                       <input
@@ -176,8 +175,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAuthor(idx, "given_name", e.target.value)
                         }
-                        placeholder="John"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="First name"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -187,8 +186,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAuthor(idx, "surname", e.target.value)
                         }
-                        placeholder="Smith"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="Last name"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -198,8 +197,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAuthor(idx, "email", e.target.value || null)
                         }
-                        placeholder="j.smith@univ.edu"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono focus:border-[#111111]"
+                        placeholder="author@univ.edu"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -210,7 +209,7 @@ export function AuthorTable({
                           handleUpdateAuthor(idx, "orcid", e.target.value || null)
                         }
                         placeholder="0000-0002-1825-0097"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono focus:border-[#111111]"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs font-mono"
                       />
                     </td>
                     <td className="py-2.5 px-3 text-center">
@@ -225,7 +224,7 @@ export function AuthorTable({
                           handleUpdateAuthor(idx, "affiliation_indices", indices);
                         }}
                         placeholder="1, 2"
-                        className="w-16 px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono text-center focus:border-[#111111]"
+                        className="w-16 px-2 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs text-center font-mono"
                       />
                     </td>
                     <td className="py-2.5 px-3 text-center">
@@ -235,30 +234,33 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAuthor(idx, "is_corresponding", e.target.checked)
                         }
-                        className="cursor-pointer accent-[#111111]"
+                        className="cursor-pointer accent-[#141413] w-4 h-4 rounded"
                       />
                     </td>
-                    <td className="py-2.5 px-3 text-right space-x-1 font-mono">
+                    <td className="py-2.5 px-3 text-right space-x-1">
                       <button
                         type="button"
                         onClick={() => handleMoveAuthor(idx, "up")}
                         disabled={idx === 0}
-                        className="px-1.5 py-0.5 border border-[#E0E0E0] hover:border-[#111111] disabled:opacity-30 text-[10px]"
+                        className="px-2 py-0.5 border border-[#e6e4dc] hover:border-[#141413] rounded text-xs disabled:opacity-30"
+                        title="Move up"
                       >
-                        ▲
+                        ↑
                       </button>
                       <button
                         type="button"
                         onClick={() => handleMoveAuthor(idx, "down")}
                         disabled={idx === authors.length - 1}
-                        className="px-1.5 py-0.5 border border-[#E0E0E0] hover:border-[#111111] disabled:opacity-30 text-[10px]"
+                        className="px-2 py-0.5 border border-[#e6e4dc] hover:border-[#141413] rounded text-xs disabled:opacity-30"
+                        title="Move down"
                       >
-                        ▼
+                        ↓
                       </button>
                       <button
                         type="button"
                         onClick={() => handleRemoveAuthor(idx)}
-                        className="px-1.5 py-0.5 border border-[#E0E0E0] hover:border-[#D0021B] text-[#D0021B] text-[10px]"
+                        className="px-2 py-0.5 border border-[#e6e4dc] hover:border-[#c93b2b] text-[#c93b2b] rounded text-xs"
+                        title="Remove"
                       >
                         ✕
                       </button>
@@ -272,31 +274,31 @@ export function AuthorTable({
       </div>
 
       {/* ── Affiliations Section ────────────────────────────────────── */}
-      <div>
-        <div className="flex justify-between items-center mb-3">
+      <div className="space-y-3">
+        <div className="flex justify-between items-center">
           <div>
-            <span className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider">
-              [ 02 · INSTITUTIONAL AFFILIATIONS ]
-            </span>
-            <span className="ml-3 text-xs text-[#707070]">
-              Indexed affiliations referenced by authors ({affiliations.length})
-            </span>
+            <h3 className="text-sm font-semibold text-[#141413]">
+              Institutional Affiliations ({affiliations.length})
+            </h3>
+            <p className="text-xs text-[#6e6d68]">
+              Institutions, departments, and research centers.
+            </p>
           </div>
 
           <button
             type="button"
             onClick={handleAddAffiliation}
-            className="px-3 py-1 bg-white border border-[#111111] hover:bg-[#111111] hover:text-white text-[#111111] text-[11px] font-mono uppercase tracking-wider transition-colors"
+            className="px-3 py-1.5 bg-[#141413] hover:bg-[#2b2a27] text-white text-xs font-semibold rounded-lg shadow-sm transition-colors"
           >
-            + ADD AFFILIATION
+            + Add Institution
           </button>
         </div>
 
-        <div className="border border-[#E0E0E0] bg-white overflow-x-auto">
+        <div className="bg-white border border-[#e6e4dc] rounded-xl overflow-x-auto shadow-sm">
           <table className="w-full text-left text-xs border-collapse">
             <thead>
-              <tr className="border-b border-[#E0E0E0] bg-[#F5F5F5] font-mono text-[11px] text-[#707070] uppercase">
-                <th className="py-2.5 px-3 w-16 text-center">Index</th>
+              <tr className="border-b border-[#e6e4dc] bg-[#f5f3ec] text-[#6e6d68] font-medium">
+                <th className="py-2.5 px-3 w-14 text-center">#</th>
                 <th className="py-2.5 px-3">Institution / University *</th>
                 <th className="py-2.5 px-3">Department / Division</th>
                 <th className="py-2.5 px-3">City / State</th>
@@ -304,17 +306,17 @@ export function AuthorTable({
                 <th className="py-2.5 px-3 w-16 text-right">Delete</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#E0E0E0]">
+            <tbody className="divide-y divide-[#e6e4dc]">
               {affiliations.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="py-6 text-center font-mono text-[#707070]">
-                    [ NO AFFILIATIONS REGISTERED — CLICK "+ ADD AFFILIATION" ]
+                  <td colSpan={6} className="py-6 text-center text-xs text-[#6e6d68]">
+                    No affiliations listed. Click "+ Add Institution" to add one.
                   </td>
                 </tr>
               ) : (
                 affiliations.map((affil, idx) => (
-                  <tr key={idx} className="hover:bg-[#FAFAFA]">
-                    <td className="py-2.5 px-3 font-mono text-center font-bold text-[#111111]">
+                  <tr key={idx} className="hover:bg-[#faf9f5]">
+                    <td className="py-2.5 px-3 text-center font-bold text-[#141413]">
                       [{affil.index}]
                     </td>
                     <td className="py-2.5 px-3">
@@ -324,8 +326,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAffiliation(idx, "institution", e.target.value)
                         }
-                        placeholder="Harvard Medical School"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="e.g. Stanford University"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -335,8 +337,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAffiliation(idx, "department", e.target.value || null)
                         }
-                        placeholder="Department of Radiology"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="e.g. Department of Radiology"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -346,8 +348,8 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAffiliation(idx, "city", e.target.value || null)
                         }
-                        placeholder="Boston, MA"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="e.g. Stanford, CA"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
                     <td className="py-2.5 px-3">
@@ -357,15 +359,16 @@ export function AuthorTable({
                         onChange={(e) =>
                           handleUpdateAffiliation(idx, "country", e.target.value || null)
                         }
-                        placeholder="USA"
-                        className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs focus:border-[#111111]"
+                        placeholder="e.g. United States"
+                        className="w-full px-2.5 py-1 bg-white border border-[#e6e4dc] rounded-lg text-xs"
                       />
                     </td>
-                    <td className="py-2.5 px-3 text-right font-mono">
+                    <td className="py-2.5 px-3 text-right">
                       <button
                         type="button"
                         onClick={() => handleRemoveAffiliation(idx)}
-                        className="px-2 py-0.5 border border-[#E0E0E0] hover:border-[#D0021B] text-[#D0021B] text-[10px]"
+                        className="px-2 py-0.5 border border-[#e6e4dc] hover:border-[#c93b2b] text-[#c93b2b] rounded text-xs"
+                        title="Remove"
                       >
                         ✕
                       </button>
@@ -380,14 +383,14 @@ export function AuthorTable({
 
       {/* ── Corresponding Author Metadata ──────────────────────────── */}
       {correspondingAuthor && (
-        <div className="border border-[#E0E0E0] bg-[#F5F5F5] p-4">
-          <div className="font-mono text-xs font-bold text-[#111111] uppercase tracking-wider mb-2">
-            [ CORRESPONDING AUTHOR DETAILS ]
-          </div>
+        <div className="bg-[#f5f3ec] border border-[#e6e4dc] rounded-xl p-5 shadow-sm">
+          <h3 className="text-xs font-semibold text-[#141413] mb-3 uppercase tracking-wider">
+            Corresponding Author Contact
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
             <div>
-              <span className="font-mono text-[10px] text-[#707070] uppercase block mb-1">
-                Name
+              <span className="text-[#6e6d68] block mb-1 font-medium">
+                Full Name
               </span>
               <input
                 type="text"
@@ -398,12 +401,12 @@ export function AuthorTable({
                     full_name: e.target.value,
                   })
                 }
-                className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs"
+                className="w-full px-3 py-1.5 bg-white border border-[#e6e4dc] rounded-lg text-xs"
               />
             </div>
             <div>
-              <span className="font-mono text-[10px] text-[#707070] uppercase block mb-1">
-                Direct Contact Email
+              <span className="text-[#6e6d68] block mb-1 font-medium">
+                Email Address
               </span>
               <input
                 type="email"
@@ -414,7 +417,7 @@ export function AuthorTable({
                     email: e.target.value,
                   })
                 }
-                className="w-full px-2 py-1 bg-white border border-[#E0E0E0] rounded-[2px] text-xs font-mono"
+                className="w-full px-3 py-1.5 bg-white border border-[#e6e4dc] rounded-lg text-xs"
               />
             </div>
           </div>
