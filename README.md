@@ -304,13 +304,34 @@ If you prefer running everything in containers without configuring local Python 
 
 ---
 
-### 🧪 Verifying the Submission Flow
+### 📖 Detailed User Guide: Account Creation, Manuscript Upload & Journal Generation
 
-1. Register an account at `http://localhost:3000/register` or sign in.
-2. Click **"+ New Project"** and create a research project.
-3. Upload any standard `.docx` manuscript.
-4. Click **"Parse Manuscript"** to extract title, authors, affiliations, sections, and statements.
-5. In the **Metadata Editor**, review the extracted fields or add any missing details.
-6. Click **"Select Target Journal"** and choose from **Nature**, **IEEE**, **Medical Image Analysis**, **Radiology**, or **MIDL**.
-7. In the **Pre-flight Checklist**, verify structural compliance and check off human confirmation.
-8. On the **Export** page, click **"Generate Document"** to compile the formatted output and download your submission-ready `.docx` package!
+*Note: The platform currently processes Word Documents (`.docx`) for input manuscripts rather than PDFs to ensure accurate structural extraction, and generates journal-specific `.docx` (magazine/journal templates) packages.*
+
+#### 1. Create an Account
+1. Open your web browser and navigate to the application at `http://localhost:3000`.
+2. Click **"Get Started"** or navigate directly to `http://localhost:3000/register`.
+3. Fill out the registration form with your Full Name, Email Address, and a secure password.
+4. Click **"Create account"**. You will automatically be logged into your new workspace dashboard.
+
+#### 2. Create a Project & Upload Manuscript
+1. In the Dashboard sidebar, click **"+ New Project"**.
+2. Give your research project a descriptive name (e.g., *"Deep Learning in Radiology Study"*).
+3. Open the newly created project from the dashboard list.
+4. On the project overview page, click the **"Upload Manuscript"** button or drag-and-drop your original research manuscript **(must be a `.docx` file)** into the designated drop zone.
+5. Once uploaded, click **"Parse Manuscript"**. The platform's parsing engine will automatically extract the title, authors, affiliations, sections, and statements.
+
+#### 3. Edit Metadata & Assign Target Journal
+1. After parsing, you will be taken to the **Metadata Editor**. Review the extracted information to ensure accuracy. You can manually edit the title, abstract, authors, and add missing required statements (e.g., Data Availability, Conflicts of Interest).
+2. Click **"Select Target Journal"** (or select the 'Journal' tab on the left navigation drawer).
+3. Browse the catalog of available journals/magazines (e.g., Nature, PLOS ONE, IEEE, Radiology, MIDL).
+4. Click **"Select Template"** on your desired target venue. The platform will instantly load the specific formatting rules and limits for that publication.
+
+#### 4. Pre-Flight Checklist & Generate Document
+1. Navigate to the **Pre-flight Checklist** tab.
+2. The engine will evaluate your parsed manuscript against the selected journal's strict rules (e.g., word count limits, mandatory disclosures).
+3. If there are `FAIL` items (e.g., missing a required conflict of interest statement), return to the Editor to add them. If there are `WARN` items you wish to bypass, use the **Override** feature with a textual justification.
+4. Once all requirements pass, confirm the checklist by clicking **"Confirm Submission Checklist"**.
+5. Finally, navigate to the **Export** tab and click **"Generate Document"**.
+6. The formatting engine will compile your manuscript into a beautifully structured, journal-compliant `.docx` package. 
+7. Click **"Download Document"** to retrieve your final submission-ready file!
