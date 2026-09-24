@@ -161,7 +161,7 @@ async def update_manuscript_metadata(
     session: SessionDep,
     current_user: CurrentUser,
 ):
-    from datetime import datetime
+    from datetime import datetime, timezone
     from app.crud.extracted_metadata import upsert_extracted_metadata
 
     manuscript = await manuscript_crud.get_manuscript(session, manuscript_id)
@@ -175,7 +175,7 @@ async def update_manuscript_metadata(
     if manuscript.status in ("PARSED", "DRAFT"):
         manuscript.status = "EDITED"
     manuscript.word_count = ir.word_count
-    manuscript.updated_at = datetime.utcnow()
+    manuscript.updated_at = datetime.now(timezone.utc)
     session.add(manuscript)
     await session.commit()
     await session.refresh(manuscript)

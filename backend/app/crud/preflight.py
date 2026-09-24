@@ -3,7 +3,7 @@
 
 from typing import Optional, List
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 from sqlalchemy.orm import selectinload
@@ -91,7 +91,7 @@ async def recalculate_result_status(
 
     result.overall_status = overall
     result.summary_counts = counts
-    result.updated_at = datetime.utcnow()
+    result.updated_at = datetime.now(timezone.utc)
     session.add(result)
     await session.commit()
     await session.refresh(result)

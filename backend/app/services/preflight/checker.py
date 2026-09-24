@@ -12,7 +12,7 @@ import re
 import logging
 from typing import Optional, Any
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
@@ -217,8 +217,8 @@ class PreflightChecker:
             overall_status="PASS",
             human_confirmed=False,
             summary_counts={"PASS": 0, "WARN": 0, "FAIL": 0},
-            created_at=datetime.utcnow(),
-            updated_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
+            updated_at=datetime.now(timezone.utc),
         )
         session.add(result)
         await session.flush()
@@ -258,7 +258,7 @@ class PreflightChecker:
 
         result.overall_status = overall
         result.summary_counts = counts
-        result.updated_at = datetime.utcnow()
+        result.updated_at = datetime.now(timezone.utc)
 
         await session.commit()
         await session.refresh(result)

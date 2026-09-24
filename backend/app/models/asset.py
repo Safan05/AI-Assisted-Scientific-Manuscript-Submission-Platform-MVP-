@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 class ManuscriptAsset(SQLModel, table=True):
     __tablename__ = "manuscript_assets"
@@ -15,4 +15,4 @@ class ManuscriptAsset(SQLModel, table=True):
     file_size_bytes: int
     order_index: int = Field(default=0)
     caption: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

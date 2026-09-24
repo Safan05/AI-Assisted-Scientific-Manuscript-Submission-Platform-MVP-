@@ -33,7 +33,7 @@ services:
       - STORAGE_PROVIDER=local
       - LOCAL_STORAGE_DIR=/app/data/storage
       - LLM_PROVIDER=openai
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_API_KEY=${OPENAI_API_KEY:-}
     volumes:
       - backend_storage:/app/data/storage
     ports:

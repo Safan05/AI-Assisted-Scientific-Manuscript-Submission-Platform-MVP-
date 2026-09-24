@@ -12,7 +12,7 @@ Parsing Pipeline (Module 4):
 from __future__ import annotations
 
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from uuid import UUID
 
 from fastapi import UploadFile, HTTPException
@@ -170,7 +170,7 @@ async def parse_manuscript(
     manuscript.raw_parsed_json = parse_result.raw_dict or {}
     manuscript.word_count = ir.word_count
     manuscript.status = "PARSED"
-    manuscript.updated_at = datetime.utcnow()
+    manuscript.updated_at = datetime.now(timezone.utc)
     session.add(manuscript)
     await session.commit()
     await session.refresh(manuscript)

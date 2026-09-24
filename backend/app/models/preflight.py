@@ -8,7 +8,7 @@ Stores evaluation execution records (PreflightResult) and individual check items
 
 from typing import Optional, List, Dict, Any
 from uuid import UUID, uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlmodel import SQLModel, Field, Relationship
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
@@ -29,7 +29,7 @@ class PreflightCheckItem(SQLModel, table=True):
     human_overridden: bool = Field(default=False)
     override_reason: Optional[str] = None
     sort_order: int = Field(default=0)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     result: Optional["PreflightResult"] = Relationship(back_populates="items")
 
@@ -44,8 +44,8 @@ class PreflightResult(SQLModel, table=True):
     human_confirmed: bool = Field(default=False)
     confirmed_at: Optional[datetime] = None
     summary_counts: Dict[str, int] = Field(default_factory=dict, sa_column=Column(JSONB))
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
     items: List[PreflightCheckItem] = Relationship(
         back_populates="result",

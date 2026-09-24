@@ -8,7 +8,7 @@ override warning items, and confirm compliance to transition manuscript status.
 
 from typing import Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from fastapi import APIRouter, HTTPException, status
 
 from app.core.deps import SessionDep, CurrentUser
@@ -213,7 +213,7 @@ async def confirm_preflight(
             detail="Cannot confirm submission checklist while mandatory FAIL items remain unresolved.",
         )
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     result.human_confirmed = True
     result.confirmed_at = now
     session.add(result)

@@ -1,7 +1,7 @@
 # backend/app/crud/extracted_metadata.py
 """CRUD for ExtractedMetadata records."""
 
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -79,7 +79,7 @@ async def upsert_extracted_metadata(
     def _serialise_list(items: list) -> list[dict]:
         return [item.model_dump() for item in items]
 
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
 
     if existing:
         # Update in-place

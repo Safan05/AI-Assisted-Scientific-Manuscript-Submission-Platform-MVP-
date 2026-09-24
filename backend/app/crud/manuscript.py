@@ -15,7 +15,7 @@ async def get_project_manuscripts(session: AsyncSession, project_id: UUID) -> Li
     result = await session.execute(statement)
     return list(result.scalars().all())
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 async def update_manuscript(session: AsyncSession, db_manuscript: Manuscript, manuscript_in: ManuscriptUpdate) -> Manuscript:
     manuscript_data = manuscript_in.model_dump(exclude_unset=True)
@@ -28,7 +28,7 @@ async def update_manuscript(session: AsyncSession, db_manuscript: Manuscript, ma
     for field, value in manuscript_data.items():
         setattr(db_manuscript, field, value)
     
-    db_manuscript.updated_at = datetime.utcnow()
+    db_manuscript.updated_at = datetime.now(timezone.utc)
     session.add(db_manuscript)
     await session.commit()
     await session.refresh(db_manuscript)

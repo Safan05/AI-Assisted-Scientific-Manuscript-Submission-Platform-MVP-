@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field, Relationship
 from uuid import UUID, uuid4
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column, String
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -17,8 +17,8 @@ class Manuscript(SQLModel, table=True):
     raw_parsed_json: Optional[dict] = Field(default=None, sa_column=Column(JSONB))
     word_count: int = Field(default=0)
     exported_storage_key: Optional[str] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ExtractedMetadata(SQLModel, table=True):
     __tablename__ = "extracted_metadata"
@@ -41,5 +41,5 @@ class ExtractedMetadata(SQLModel, table=True):
     acknowledgements: Optional[str] = None
     is_human_verified: bool = Field(default=False)
     verified_at: Optional[datetime] = None
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

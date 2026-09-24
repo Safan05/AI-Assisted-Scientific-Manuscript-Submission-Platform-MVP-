@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 class Project(SQLModel, table=True):
     __tablename__ = "projects"
@@ -11,5 +11,5 @@ class Project(SQLModel, table=True):
     name: str
     description: Optional[str] = None
     status: str = Field(default="active")
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))

@@ -1,7 +1,7 @@
 from sqlmodel import SQLModel, Field
 from uuid import UUID, uuid4
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy import Column
 from sqlalchemy.dialects.postgresql import JSONB
 
@@ -20,8 +20,8 @@ class JournalTemplate(SQLModel, table=True):
     max_abstract_words: Optional[int] = None
     max_total_words: Optional[int] = None
     is_active: bool = Field(default=True)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+    updated_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class TemplateRule(SQLModel, table=True):
     __tablename__ = "template_rules"

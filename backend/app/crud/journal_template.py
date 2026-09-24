@@ -3,7 +3,7 @@
 
 from typing import List, Optional
 from uuid import UUID
-from datetime import datetime
+from datetime import datetime, timezone
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -80,7 +80,7 @@ async def update_template(
     update_data = template_in.model_dump(exclude_unset=True)
     for field, value in update_data.items():
         setattr(db_template, field, value)
-    db_template.updated_at = datetime.utcnow()
+    db_template.updated_at = datetime.now(timezone.utc)
     session.add(db_template)
     await session.commit()
     await session.refresh(db_template)

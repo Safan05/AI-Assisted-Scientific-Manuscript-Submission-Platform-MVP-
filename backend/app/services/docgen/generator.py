@@ -21,7 +21,7 @@ Workflow per the Module 8 spec:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timezone
 from io import BytesIO
 from uuid import UUID
 
@@ -162,7 +162,7 @@ class DocumentGenerator:
         # ── Step 9: Persist exported_storage_key + status transition ──────────
         manuscript.exported_storage_key = output_key
         manuscript.status = EXPORTED_STATUS
-        manuscript.updated_at = datetime.utcnow()
+        manuscript.updated_at = datetime.now(timezone.utc)
         session.add(manuscript)
         await session.commit()
         await session.refresh(manuscript)

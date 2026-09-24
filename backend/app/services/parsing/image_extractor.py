@@ -13,7 +13,7 @@ from __future__ import annotations
 
 import io
 import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Optional
 from uuid import UUID
 
@@ -94,7 +94,7 @@ class ImageExtractor:
                     file_size_bytes=len(pic.image_bytes),
                     order_index=pic.index,
                     caption=caption,
-                    created_at=datetime.utcnow(),
+                    created_at=datetime.now(timezone.utc),
                 )
                 self.session.add(asset)
                 assets.append(asset)

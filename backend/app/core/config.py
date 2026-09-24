@@ -24,7 +24,7 @@ class Settings(BaseSettings):
 
     # LLM
     LLM_PROVIDER: str = "openai"
-    LLM_API_KEY: str
+    LLM_API_KEY: Optional[str] = None
     LLM_BASE_URL: Optional[str] = None
     LLM_DEFAULT_MODEL: str = "gpt-4o"
 
